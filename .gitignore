@@ -1,0 +1,7 @@
+/@eaDir/
+.idea
+.DS_Store
+env*/
+.pytest_cache/
+__pytest_cache__/
+__pycache__/
