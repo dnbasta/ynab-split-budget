@@ -236,18 +236,15 @@ class ChargeBuilder:
 
 	@staticmethod
 	def _parse_genuine_memo(memo_str: str) -> Optional[str]:
-		share_str_list = re.findall(r"(@[\w\-_0-9]*:?\d*)", str(memo_str))
-
-		# if len(share_str_list) > 0:
-		# 	memo_splits = [self._parse_share_str(s) for s in share_str_list]
-		#
-		# 	memo_str = ' '.join([m for m in memo_splits if m != split_str])
-
-		return memo_str
+		if memo_str is not None:
+			share_str = re.search(r"(@[0-9]*)", str(memo_str))
+			if share_str is not None:
+				memo_str = memo_str.replace(share_str[1], '')
+			return memo_str
 
 	@staticmethod
 	def _parse_split_pct(share_str: str) -> Optional[float]:
-		re_result = re.search(r'.*:([0-9]?[0-9]?)$', str(share_str))
+		re_result = re.search(r'@([0-9]?[0-9]?)', str(share_str))
 		if re_result and re_result.group(1).isdigit():
 			return float(re_result.group(1)) / 100
 
