@@ -79,7 +79,7 @@ class YnabSplitBudget:
         # log processed and return
         r = ProcessResponse(user_1_owned_processed=fetch_result.user_1_count,
                             user_2_owned_processed=fetch_result.user_2_count,
-                            balance_off_by=user_1_client.fetch_balance() - user_2_client.fetch_balance())
+                            balance_off_by=user_1_client.fetch_balance() + user_2_client.fetch_balance())
         print(r.__dict__)
         return r
 
