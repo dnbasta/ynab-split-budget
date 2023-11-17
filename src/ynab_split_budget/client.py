@@ -65,7 +65,7 @@ class Client:
 			self._delete(operation)
 
 	def _insert(self, ynab_op: OperationInsert) -> (int, int, int):
-		data = {'transactions': [ynab_op.as_dict() | {'account_id': self.account_id}]}
+		data = {'transactions': [{**ynab_op.as_dict(), **{'account_id': self.account_id}}]}
 		r = requests.post(f'{YNAB_BASE_URL}budgets/{self.budget_id}/transactions', json=data, headers=self._header())
 		self._check_response(r)
 
