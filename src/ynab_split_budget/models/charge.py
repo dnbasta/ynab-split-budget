@@ -28,6 +28,15 @@ class ChargeOperation:
     user_1_operation: Optional[Operation]
     user_2_operation: Optional[Operation]
 
+    def __repr__(self):
+        r = ' | '.join([str(self.charge.owner.name),
+                        str(self.charge.__class__.__name__),
+                        f'{self.charge.charge_date:%Y-%m-%d}',
+                        str(self.charge.paid),
+                        str(self.charge.payee_name)])
+        return r
+
+
 
 @dataclass(eq=True, frozen=True)
 class ChargeNew(Charge):
