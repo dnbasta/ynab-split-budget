@@ -30,7 +30,8 @@ class ChargeBuilder:
 		if isinstance(transaction, TransactionPaidSplitPart):
 			transaction = self.fetch_lookup(transaction.owner).fetch_parent_by_transfer_transaction_id(transaction.id)
 
-		lookup = self.fetch_lookup(self._fetch_other_user(transaction.owner))
+		other_user = self._fetch_other_user(transaction.owner)
+		lookup = self.fetch_lookup(other_user)
 		if recipient_transaction := lookup.fetch_recipient_by_hashed_id(encrypt(transaction.id)):
 
 			if isinstance(transaction, TransactionPaidDeleted) and not recipient_transaction.deleted:
@@ -73,7 +74,7 @@ class ChargeBuilder:
 				if transaction.deleted:
 					return self._build_recipient_deleted(owner_transaction=owner_transaction,
 														recipient_transaction_id=transaction.id)
-				else:
+				elif transaction.owed != owner_transaction.paid - owner_transaction.owed:
 					return self._build_changed(owner_transaction=owner_transaction,
 											   recipient_transaction=transaction)
 
@@ -260,7 +261,7 @@ class ChargeBuilder:
 	def _fetch_other_user(self, user: User) -> User:
 		if user == self.user_1:
 			return self.user_2
-		return user
+		return self.user_1
 
 	def fetch_lookup(self, user: User) -> TransactionLookupRepository:
 		if user == self.user_1:
