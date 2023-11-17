@@ -2,8 +2,9 @@ from dataclasses import dataclass
 from typing import List
 
 from src.ynab_split_budget.builders.chargebuilder import ChargeBuilder, encrypt
-from src.ynab_split_budget.builders.chargeoperationbuilder import ChargeOperationBuilder
-from src.ynab_split_budget.models.charge import ChargeOperation, Charge
+from src.ynab_split_budget.builders.operationbuilder import OperationBuilder
+from src.ynab_split_budget.models.charge import Charge
+from src.ynab_split_budget.models.operations import Operation
 from src.ynab_split_budget.repositories.baserepository import BaseRepository
 from src.ynab_split_budget.config import Config, ServerKnowledge, User
 from src.ynab_split_budget.repositories.transactionlookuprepository import TransactionLookupRepository
@@ -11,7 +12,9 @@ from src.ynab_split_budget.repositories.transactionlookuprepository import Trans
 
 @dataclass
 class ChargeOperationRepository:
-	charges: List[ChargeOperation]
+	charges: List[Charge]
+	user_1_operations: List[Operation]
+	user_2_operations: List[Operation]
 	server_knowledge: ServerKnowledge
 	user_1: User
 	user_2: User
@@ -30,31 +33,35 @@ class ChargeOperationRepository:
 						   user_1=config.user_1,
 						   user_2=config.user_2)
 
-		cob = ChargeOperationBuilder.from_config(config=config, charge_builder=cb)
+		user_1_charges = [cb.from_transaction(t) for t in base_repo.user_1_changed]
+		user_2_charges = [cb.from_transaction(t) for t in base_repo.user_2_changed]
 
-		# create charges
-		user_1_charge_ops = [cob.from_transaction(t) for t in base_repo.user_1_changed]
-		user_2_charge_ops = [cob.from_transaction(t) for t in base_repo.user_2_changed]
+		charges = [c for c in set(user_1_charges + user_2_charges) if c is not None]
 
-		charge_ops = [c for c in set(user_1_charge_ops + user_2_charge_ops) if c is not None]
+		# create operations
+		ob = OperationBuilder.from_config(config=config)
+		user_1_ops = [ob.from_charge(charge=c, user=config.user_1) for c in charges]
+		user_2_ops = [ob.from_charge(charge=c, user=config.user_2) for c in charges]
 
-		return cls(charges=charge_ops,
+		return cls(charges=charges,
+				   user_1_operations=user_1_ops,
+				   user_2_operations=user_2_ops,
 				   server_knowledge=base_repo.server_knowledge,
 				   user_1=config.user_1,
 				   user_2=config.user_2)
 
 	@property
 	def user_1_charges(self) -> List[Charge]:
-		return [c.charge for c in self.charges if c.charge.owner == self.user_1]
+		return [c for c in self.charges if c.owner == self.user_1]
 
 	@property
 	def user_2_charges(self) -> List[Charge]:
-		return [c.charge for c in self.charges if c.charge.owner == self.user_2]
+		return [c for c in self.charges if c.owner == self.user_2]
 
 	@property
 	def user_1_ops(self):
-		return [co.user_1_operation for co in self.charges if co.user_1_operation is not None]
+		return [o for o in self.user_1_operations if o is not None]
 
 	@property
 	def user_2_ops(self):
-		return [co.user_2_operation for co in self.charges if co.user_2_operation is not None]
+		return [o for o in self.user_2_operations if o is not None]

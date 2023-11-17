@@ -16,7 +16,7 @@ class OperationBuilder:
 		return cls(user_1=config.user_1,
 				   user_2=config.user_2)
 
-	def op_from_charge(self, charge: Charge, user: User) -> Optional[Operation]:
+	def from_charge(self, charge: Charge, user: User) -> Optional[Operation]:
 		if isinstance(charge, ChargeNew):
 			if charge.owner == user:
 				return self._build_ynab_split(charge=charge)

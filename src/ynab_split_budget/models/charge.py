@@ -3,7 +3,6 @@ from datetime import date
 from typing import Optional
 
 from src.ynab_split_budget.config import User
-from src.ynab_split_budget.models.operations import Operation
 from src.ynab_split_budget.models.transaction import Category
 
 
@@ -21,19 +20,11 @@ class Charge:
     owner_category: Category
     recipient: User
 
-
-@dataclass(eq=True, frozen=True)
-class ChargeOperation:
-    charge: Charge
-    user_1_operation: Optional[Operation]
-    user_2_operation: Optional[Operation]
-
     def __repr__(self):
-        r = ' | '.join([str(self.charge.owner.name),
-                        str(self.charge.__class__.__name__),
-                        f'{self.charge.charge_date:%Y-%m-%d}',
-                        str(self.charge.paid),
-                        str(self.charge.payee_name)])
+        r = ' | '.join([str(self.owner.name),
+                        f'{self.charge_date:%Y-%m-%d}',
+                        str(self.paid),
+                        str(self.payee_name)])
         return r
 
 
