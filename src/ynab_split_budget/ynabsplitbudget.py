@@ -25,12 +25,20 @@ class FetchResult:
         return self._charge_ops_repo.server_knowledge.user_2
 
     @property
-    def charge_ops_user_1(self) -> int:
+    def user_1_count(self) -> int:
         return self._charge_ops_repo.user_1_owned
 
     @property
-    def charge_ops_user_2(self):
-        return self._charge_ops_repo.user_1_owned
+    def user_2_count(self) -> int:
+        return self._charge_ops_repo.user_2_owned
+
+    @property
+    def user_1_name(self) -> str:
+        return self._charge_ops_repo.user_1.name
+
+    @property
+    def user_2_name(self) -> str:
+        return self._charge_ops_repo.user_2.name
 
 
 @dataclass
@@ -69,8 +77,8 @@ class YnabSplitBudget:
                                      user_2=fetch_result.server_knowledge_user_2)
 
         # log processed and return
-        r = ProcessResponse(user_1_owned_processed=fetch_result.charge_ops_user_1,
-                            user_2_owned_processed=fetch_result.charge_ops_user_2,
+        r = ProcessResponse(user_1_owned_processed=fetch_result.user_1_count,
+                            user_2_owned_processed=fetch_result.user_2_count,
                             balance_off_by=user_1_client.fetch_balance() - user_2_client.fetch_balance())
         print(r.__dict__)
         return r
