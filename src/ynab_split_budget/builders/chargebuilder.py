@@ -81,8 +81,6 @@ class ChargeBuilder:
 				return self._build_owner_deleted(owner_transaction=owner_transaction,
 												 recipient_transaction_id=transaction.id)
 
-		return self._build_owner_deleted_from_recipient(recipient_transaction=transaction)
-
 	def from_reference(self, transaction: TransactionReference) -> Optional[Charge]:
 		lookup = self.fetch_lookup(self._fetch_other_user(transaction.owner))
 		if owner_transaction := lookup.fetch_owner_by_hashed_id(self._fetch_charge_id_from_owed(transaction)):
@@ -121,8 +119,8 @@ class ChargeBuilder:
 							 recipient_transaction_id: Optional[str]) -> ChargeOwnerDeleted:
 		return ChargeOwnerDeleted(id=encrypt(owner_transaction.id),
 								  paid=owner_transaction.paid,
-								  owner_owed=owner_transaction.owed,
-								  recipient_owed=owner_transaction.paid - owner_transaction.owed,
+								  owner_owed=None,
+								  recipient_owed=None,
 								  payee_name=owner_transaction.payee_name,
 								  memo=owner_transaction.memo,
 								  charge_date=owner_transaction.transaction_date,
