@@ -14,7 +14,7 @@ class Charge:
     memo: str
     payee_name: str
     owner_owed: Optional[float]
-    recipient_owed: float
+    recipient_owed: Optional[float]
     paid: float
     owner: User
     owner_transaction_id: str
@@ -35,7 +35,6 @@ class ChargeOperation:
                         str(self.charge.paid),
                         str(self.charge.payee_name)])
         return r
-
 
 
 @dataclass(eq=True, frozen=True)
