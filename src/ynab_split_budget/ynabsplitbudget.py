@@ -2,50 +2,55 @@ from dataclasses import dataclass
 from typing import List
 
 from src.ynab_split_budget.client import Client
-from src.ynab_split_budget.models.charge import ChargeOperation
+from src.ynab_split_budget.models.charge import Charge
+from src.ynab_split_budget.models.operations import Operation
 from src.ynab_split_budget.repositories.baserepository import BaseRepository
 from src.ynab_split_budget.repositories.chargeoperationrepository import ChargeOperationRepository
 from src.ynab_split_budget.config import Config, ServerKnowledge
 
 
 @dataclass
+class FetchResultUser:
+    charges: List[Charge]
+    name: str
+    server_knowledge: int
+    operations: List[Operation]
+
+    @property
+    def count(self):
+        return len(self.charges)
+
+
+@dataclass
 class FetchResult:
-    _charge_ops_repo: ChargeOperationRepository
+    user_1: FetchResultUser
+    user_2: FetchResultUser
 
-    @property
-    def charges(self) -> List[ChargeOperation]:
-        return self._charge_ops_repo.charges
-
-    @property
-    def server_knowledge_user_1(self) -> int:
-        return self._charge_ops_repo.server_knowledge.user_1
-
-    @property
-    def server_knowledge_user_2(self) -> int:
-        return self._charge_ops_repo.server_knowledge.user_2
-
-    @property
-    def user_1_count(self) -> int:
-        return self._charge_ops_repo.user_1_owned
-
-    @property
-    def user_2_count(self) -> int:
-        return self._charge_ops_repo.user_2_owned
-
-    @property
-    def user_1_name(self) -> str:
-        return self._charge_ops_repo.user_1.name
-
-    @property
-    def user_2_name(self) -> str:
-        return self._charge_ops_repo.user_2.name
+    @classmethod
+    def from_charge_ops_repo(cls, charge_ops_repo: ChargeOperationRepository):
+        user_1 = FetchResultUser(charges=charge_ops_repo.user_1_charges,
+                                 operations=charge_ops_repo.user_1_ops,
+                                 name=charge_ops_repo.user_1.name,
+                                 server_knowledge=charge_ops_repo.server_knowledge.user_1)
+        user_2 = FetchResultUser(charges=charge_ops_repo.user_2_charges,
+                                 operations=charge_ops_repo.user_2_ops,
+                                 name=charge_ops_repo.user_2.name,
+                                 server_knowledge=charge_ops_repo.server_knowledge.user_2)
+        return cls(user_1=user_1, user_2=user_2)
 
 
 @dataclass
 class ProcessResponse:
     user_1_owned_processed: int
     user_2_owned_processed: int
-    balance_off_by: bool
+    user_1_balance: float
+    user_2_balance: float
+
+    @property
+    def balance_matches(self) -> bool:
+        if self.user_1_balance - self.user_2_balance == 0:
+            return True
+        return False
 
 
 @dataclass
@@ -61,7 +66,7 @@ class YnabSplitBudget:
     def fetch_charges(self) -> FetchResult:
         base_repo = BaseRepository.from_config(config=self._config)
         charge_ops_repo = ChargeOperationRepository.from_config(base_repo=base_repo, config=self._config)
-        return FetchResult(_charge_ops_repo=charge_ops_repo)
+        return FetchResult.from_charge_ops_repo(charge_ops_repo=charge_ops_repo)
 
     def process_charges(self, fetch_result: FetchResult):
 
@@ -70,19 +75,21 @@ class YnabSplitBudget:
         user_2_client = Client.from_config(user=self._config.user_2,
                                            last_server_knowledge=self._config.last_server_knowledge.user_2)
 
-        [user_1_client.process_operation(o.user_1_operation) for o in fetch_result.charges if o.user_1_operation is not None]
-        [user_2_client.process_operation(o.user_2_operation) for o in fetch_result.charges if o.user_2_operation is not None]
+        [user_1_client.process_operation(o) for o in fetch_result.user_1.operations]
+        [user_2_client.process_operation(o) for o in fetch_result.user_2.operations]
 
-        self.update_server_knowledge(user_1=fetch_result.server_knowledge_user_1,
-                                     user_2=fetch_result.server_knowledge_user_2)
+        self.update_server_knowledge(user_1=fetch_result.user_1.server_knowledge,
+                                     user_2=fetch_result.user_2.server_knowledge)
 
         # log processed and return
-        r = ProcessResponse(user_1_owned_processed=fetch_result.user_1_count,
-                            user_2_owned_processed=fetch_result.user_2_count,
-                            balance_off_by=user_1_client.fetch_balance() + user_2_client.fetch_balance())
+        r = ProcessResponse(user_1_owned_processed=fetch_result.user_1.count,
+                            user_2_owned_processed=fetch_result.user_2.count,
+                            user_1_balance=user_1_client.fetch_balance(),
+                            user_2_balance=user_2_client.fetch_balance())
         print(r.__dict__)
         return r
 
     def update_server_knowledge(self, user_1: int, user_2: int) -> None:
         sk = ServerKnowledge(user_1=user_1, user_2=user_2)
+        print(f'new server knowledge: {sk.__dict__}')
         sk.to_file(self._path)

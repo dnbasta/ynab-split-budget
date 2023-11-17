@@ -3,7 +3,7 @@ from typing import List
 
 from src.ynab_split_budget.builders.chargebuilder import ChargeBuilder, encrypt
 from src.ynab_split_budget.builders.chargeoperationbuilder import ChargeOperationBuilder
-from src.ynab_split_budget.models.charge import ChargeOperation
+from src.ynab_split_budget.models.charge import ChargeOperation, Charge
 from src.ynab_split_budget.repositories.baserepository import BaseRepository
 from src.ynab_split_budget.config import Config, ServerKnowledge, User
 from src.ynab_split_budget.repositories.transactionlookuprepository import TransactionLookupRepository
@@ -44,9 +44,17 @@ class ChargeOperationRepository:
 				   user_2=config.user_2)
 
 	@property
-	def user_1_owned(self) -> int:
-		return len([c for c in self.charges if c.charge.owner == self.user_1])
+	def user_1_charges(self) -> List[Charge]:
+		return [c.charge for c in self.charges if c.charge.owner == self.user_1]
 
 	@property
-	def user_2_owned(self) -> int:
-		return len([c for c in self.charges if c.charge.owner == self.user_2])
+	def user_2_charges(self) -> List[Charge]:
+		return [c.charge for c in self.charges if c.charge.owner == self.user_2]
+
+	@property
+	def user_1_ops(self):
+		return [co.user_1_operation for co in self.charges if co.user_1_operation is not None]
+
+	@property
+	def user_2_ops(self):
+		return [co.user_2_operation for co in self.charges if co.user_2_operation is not None]
