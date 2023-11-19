@@ -31,7 +31,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install poetry
         poetry config repositories.test-pypi https://test.pypi.org/legacy/
-        poetry config pypi-token.test-pypi ${{ secrets.PYPI_TOKEN }}
+        poetry config pypi-token.test-pypi ${{ secrets.PYPI_TEST_TOKEN }}
     - name: Build and publish
       run: |
         poetry version $(git describe --tags --abbrev=0)
