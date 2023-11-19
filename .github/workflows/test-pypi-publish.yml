@@ -6,7 +6,7 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Build and upload to pypi-test
+name: Publish package to test-pypi
 
 on:
   release:
@@ -27,19 +27,20 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: '3.x'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install poetry
-        poetry config repositories.test-pypi https://test.pypi.org/legacy/
-        poetry config pypi-token.test-pypi ${{ secrets.PYPI_TEST_TOKEN }}
-    - name: Build
-      run: |
-        poetry version $(git describe --tags --abbrev=0)
-        poetry build
     - name: Publish python poetry package
       uses: JRubics/poetry-publish@v1.9
       with:
         pypi_token: ${{ secrets.PYPI_TEST_TOKEN }}
         repository_name: "testpypi"
         repository_url: "https://test.pypi.org/legacy/"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install poetry
+        poetry config repositories.test-pypi https://test.pypi.org/legacy/
+        poetry config pypi-token.test-pypi ${{ secrets.PYPI_TEST_TOKEN }}
+    - name: Build and publish
+      run: |
+        poetry version $(git describe --tags --abbrev=0)
+        poetry build
+        poetry publish -r test-pypi
