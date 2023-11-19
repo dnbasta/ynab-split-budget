@@ -1,5 +1,5 @@
-from src.ynab_split_budget.repositories.baserepository import BaseRepository
-from src.ynab_split_budget.config import Config
+from src.ynabsplitbudget.repositories.baserepository import BaseRepository
+from src.ynabsplitbudget.config import Config
 
 
 def test_from_config(conf_path):

@@ -4,12 +4,12 @@ build-backend = "poetry-core.masonry.api"
 
 [tool.poetry]
 name = "ynab-split-budget"
-version = "0.0.3"
+version = "0.0.0"
 authors = ["Daniel Basta <ynabsplitbudget@basta.info>"]
 description = "Library to sync You Need A Budget (YNAB) transactions with Splitwise"
 readme = "README.md"
 license = 'MIT'
-packages = [{include = 'ynab_split_budget', from = 'src'}]
+packages = [{include = 'ynabsplitbudget', from = 'src'}]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -22,5 +22,5 @@ pyyaml = '>=6.0'
 requests = '>=2.31'
 
 [poetry.urls]
-"Homepage" = "https://github.com/dnbasta/ynab-splitwise-sync"
-"Bug Tracker" = "https://github.com/dnbasta/ynab-splitwise-sync/issues"
+"Homepage" = "https://github.com/dnbasta/ynab-split-budget"
+"Bug Tracker" = "https://github.com/dnbasta/ynab-split-budget/issues"

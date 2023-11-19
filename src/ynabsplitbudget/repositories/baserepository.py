@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from typing import List, FrozenSet
 
-from src.ynab_split_budget.client import Client
-from src.ynab_split_budget.models.transaction import Transaction
-from src.ynab_split_budget.config import Config, ServerKnowledge
+from src.ynabsplitbudget.client import Client
+from src.ynabsplitbudget.models.transaction import Transaction
+from src.ynabsplitbudget.config import Config, ServerKnowledge
 
 
 @dataclass

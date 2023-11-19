@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 from typing import List
 
-from src.ynab_split_budget.client import Client
-from src.ynab_split_budget.models.charge import Charge
-from src.ynab_split_budget.models.operations import Operation
-from src.ynab_split_budget.repositories.baserepository import BaseRepository
-from src.ynab_split_budget.repositories.chargeoperationrepository import ChargeOperationRepository
-from src.ynab_split_budget.config import Config, ServerKnowledge
+from src.ynabsplitbudget.client import Client
+from src.ynabsplitbudget.models.charge import Charge
+from src.ynabsplitbudget.models.operations import Operation
+from src.ynabsplitbudget.repositories.baserepository import BaseRepository
+from src.ynabsplitbudget.repositories.chargeoperationrepository import ChargeOperationRepository
+from src.ynabsplitbudget.config import Config, ServerKnowledge
 
 
 @dataclass

@@ -6,10 +6,10 @@ from typing import List
 import requests
 from requests import Response
 
-from src.ynab_split_budget.builders.transactionbuilder import TransactionBuilder
-from src.ynab_split_budget.config import User
-from src.ynab_split_budget.models.operations import OperationInsert, OperationUpdate, OperationDelete, Operation, OperationSplit
-from src.ynab_split_budget.models.transaction import Transaction
+from src.ynabsplitbudget.builders.transactionbuilder import TransactionBuilder
+from src.ynabsplitbudget.config import User
+from src.ynabsplitbudget.models.operations import OperationInsert, OperationUpdate, OperationDelete, Operation, OperationSplit
+from src.ynabsplitbudget.models.transaction import Transaction
 
 YNAB_BASE_URL = 'https://api.youneedabudget.com/v1/'
 

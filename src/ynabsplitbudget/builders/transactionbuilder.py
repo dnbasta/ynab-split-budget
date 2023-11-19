@@ -1,8 +1,8 @@
 import re
 from dataclasses import dataclass
 from datetime import datetime, date
-from src.ynab_split_budget.models.transaction import Transaction, TransactionPaidSplit, TransactionOwed, Category, TransactionReference, TransactionPaidSplitPart, TransactionPaidDeleted, TransactionPaidTransfer, TransactionPaidToSplit
-from src.ynab_split_budget.config import User
+from src.ynabsplitbudget.models.transaction import Transaction, TransactionPaidSplit, TransactionOwed, Category, TransactionReference, TransactionPaidSplitPart, TransactionPaidDeleted, TransactionPaidTransfer, TransactionPaidToSplit
+from src.ynabsplitbudget.config import User
 
 
 @dataclass

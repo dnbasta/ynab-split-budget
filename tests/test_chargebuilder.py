@@ -2,11 +2,11 @@ from typing import get_type_hints
 from unittest.mock import MagicMock
 import pytest
 
-from src.ynab_split_budget.builders.chargebuilder import ChargeBuilder
-from src.ynab_split_budget.config import User
-from src.ynab_split_budget.models.charge import ChargeNew, ChargeNewIncompleteOwner, ChargeNewIncompleteRecipient, ChargeRecipientDeleted, ChargeChanged, ChargeOwnerDeleted
-from src.ynab_split_budget.models.transaction import TransactionPaidToSplit, TransactionOwed, TransactionPaidTransfer, TransactionReference, TransactionPaidSplit, TransactionPaidDeleted
-from src.ynab_split_budget.repositories.transactionlookuprepository import TransactionLookupRepository
+from src.ynabsplitbudget.builders.chargebuilder import ChargeBuilder
+from src.ynabsplitbudget.config import User
+from src.ynabsplitbudget.models.charge import ChargeNew, ChargeNewIncompleteOwner, ChargeNewIncompleteRecipient, ChargeRecipientDeleted, ChargeChanged, ChargeOwnerDeleted
+from src.ynabsplitbudget.models.transaction import TransactionPaidToSplit, TransactionOwed, TransactionPaidTransfer, TransactionReference, TransactionPaidSplit, TransactionPaidDeleted
+from src.ynabsplitbudget.repositories.transactionlookuprepository import TransactionLookupRepository
 
 MOCK_OWED = MagicMock(spec=TransactionOwed(**get_type_hints(TransactionOwed)))
 MOCK_OWED.owed = 5

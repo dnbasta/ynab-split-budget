@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 from typing import List
 
-from src.ynab_split_budget.builders.chargebuilder import ChargeBuilder, encrypt
-from src.ynab_split_budget.builders.operationbuilder import OperationBuilder
-from src.ynab_split_budget.models.charge import Charge
-from src.ynab_split_budget.models.operations import Operation
-from src.ynab_split_budget.repositories.baserepository import BaseRepository
-from src.ynab_split_budget.config import Config, ServerKnowledge, User
-from src.ynab_split_budget.repositories.transactionlookuprepository import TransactionLookupRepository
+from src.ynabsplitbudget.builders.chargebuilder import ChargeBuilder, encrypt
+from src.ynabsplitbudget.builders.operationbuilder import OperationBuilder
+from src.ynabsplitbudget.models.charge import Charge
+from src.ynabsplitbudget.models.operations import Operation
+from src.ynabsplitbudget.repositories.baserepository import BaseRepository
+from src.ynabsplitbudget.config import Config, ServerKnowledge, User
+from src.ynabsplitbudget.repositories.transactionlookuprepository import TransactionLookupRepository
 
 
 @dataclass

@@ -2,7 +2,7 @@ from abc import ABC
 from dataclasses import dataclass
 from datetime import date
 
-from src.ynab_split_budget.config import User
+from src.ynabsplitbudget.config import User
 
 
 @dataclass(eq=True, frozen=True)

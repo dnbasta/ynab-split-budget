@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from typing import Optional, FrozenSet, Union, Callable
 
-from src.ynab_split_budget.models.transaction import Transaction, TransactionPaid, TransactionOwed, TransactionPaidSplit, TransactionReference
+from src.ynabsplitbudget.models.transaction import Transaction, TransactionPaid, TransactionOwed, TransactionPaidSplit, TransactionReference
 
 
 @dataclass(eq=True, frozen=True)

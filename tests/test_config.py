@@ -1,4 +1,4 @@
-from src.ynab_split_budget.config import Config
+from src.ynabsplitbudget.config import Config
 
 
 def test_from_file(conf_path):

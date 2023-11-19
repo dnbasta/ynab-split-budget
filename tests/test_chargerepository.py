@@ -1,6 +1,6 @@
-from src.ynab_split_budget.config import Config
-from src.ynab_split_budget.repositories.baserepository import BaseRepository
-from src.ynab_split_budget.repositories.chargeoperationrepository import ChargeOperationRepository
+from src.ynabsplitbudget.config import Config
+from src.ynabsplitbudget.repositories.baserepository import BaseRepository
+from src.ynabsplitbudget.repositories.chargeoperationrepository import ChargeOperationRepository
 
 
 def test_from_config(conf_path):
