@@ -59,7 +59,7 @@ class YnabSplitBudget:
     _path: str
 
     @classmethod
-    def from_config(cls, path: str):
+    def from_config(cls, path: str = ''):
         return cls(_config=Config.from_path(path=path),
                    _path=path)
 
