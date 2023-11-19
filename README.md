@@ -10,6 +10,8 @@ project_description
 pip install ynab-split-budget
 ```
 
+## Create `config.yaml`
+
 ## Usage
 
 ```py
