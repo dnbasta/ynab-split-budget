@@ -4,7 +4,7 @@ build-backend = "poetry-core.masonry.api"
 
 [tool.poetry]
 name = "ynab-split-budget"
-version = "0.0.0"
+version = "0.0.3"
 authors = ["Daniel Basta <ynabsplitbudget@basta.info>"]
 description = "Library to sync You Need A Budget (YNAB) transactions with Splitwise"
 readme = "README.md"

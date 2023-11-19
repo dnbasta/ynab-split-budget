@@ -37,9 +37,5 @@ jobs:
       run: |
         poetry version $(git describe --tags --abbrev=0)
         poetry build
-    - name: Publish python poetry package
-      uses: JRubics/poetry-publish@v1.9
-      with:
-        pypi_token: ${{ secrets.PYPI_TEST_TOKEN }}
-        repository_name: "testpypi"
-        repository_url: "https://test.pypi.org/legacy/"
+    - name: Publish
+      run: poetry publish -r test-pypi
