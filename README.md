@@ -1,7 +1,7 @@
 # project_name
 
-[![codecov](https://codecov.io/gh/author_name/project_urlname/branch/main/graph/badge.svg?token=project_urlname_token_here)](https://codecov.io/gh/author_name/project_urlname)
-[![CI](https://github.com/author_name/project_urlname/actions/workflows/main.yml/badge.svg)](https://github.com/author_name/project_urlname/actions/workflows/main.yml)
+[![Version](https://badge.fury.io/gh/tterb%2FHyde.svg)](https://badge.fury.io/gh/tterb%2FHyde)
+[![GitHub Release](https://img.shields.io/github/release/tterb/PlayMusic.svg?style=flat)]() 
 
 project_description
 
@@ -14,7 +14,7 @@ pip install ynab-split-budget
 ## Usage
 
 ```py
-from ynab_split_budget import YnabSplitBudget
+from ynabsplitbudget import YnabSplitBudget
 
 BaseClass().base_method()
 base_function()
