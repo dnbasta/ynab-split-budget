@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from src.ynabsplitbudget.builders.chargebuilder import ChargeBuilder
-from src.ynabsplitbudget.config import User
+from src.ynabsplitbudget.models.user import User
 from src.ynabsplitbudget.models.charge import ChargeNew, ChargeNewIncompleteOwner, ChargeNewIncompleteRecipient, ChargeRecipientDeleted, ChargeChanged, ChargeOwnerDeleted
 from src.ynabsplitbudget.models.transaction import TransactionPaidToSplit, TransactionOwed, TransactionPaidTransfer, TransactionReference, TransactionPaidSplit, TransactionPaidDeleted
 from src.ynabsplitbudget.repositories.transactionlookuprepository import TransactionLookupRepository

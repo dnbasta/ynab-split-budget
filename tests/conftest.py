@@ -8,10 +8,16 @@ from unittest.mock import MagicMock
 import pytest
 import os
 
+from src.ynabsplitbudget.builders.configbuilder import ConfigBuilder
+
 
 @pytest.fixture
-def prod_conf():
+def prod_conf_path():
 	return f'{os.path.dirname(os.path.dirname(os.path.realpath(__file__)))}/config.yaml'
+
+@pytest.fixture
+def prod_conf(prod_conf_path):
+	return ConfigBuilder(path=prod_conf_path).build_from_path()
 
 
 def random_str() -> str:
