@@ -50,7 +50,6 @@ ynab_split_budget.load_config(path='path/config.yaml')
 ynab_split_budget.update_server_knowledge()
 ```
 ## Usage
-
 ### YNAB
 #### Option 1: 
 Create a transfer to the cost sharing account.
@@ -59,7 +58,7 @@ Mark a transaction in your budget with the purple flag. This library will detect
 by default a 50% split transaction and transfer that to the cost sharing account. If you would like an automatic split 
 with another percentage you can put a marker in the form of `@<int>` the memo line. This will create a transfer 
 transaction with that percentage amount.
-
+![flag-memo](https://github.com/dnbasta/ynab-split-budget/assets/20659030/c4c6f63e-6e69-478e-82bd-0eba7d925ad8)
 
 ### ynab-split-budget
 
