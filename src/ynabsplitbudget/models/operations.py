@@ -2,7 +2,7 @@ from abc import ABC
 from dataclasses import dataclass
 from datetime import date
 
-from src.ynabsplitbudget.config import User
+from src.ynabsplitbudget.models.user import User
 
 
 @dataclass(eq=True, frozen=True)
@@ -48,7 +48,7 @@ class OperationSplit(Operation):
                     [{
                         "amount": round(-int((self.paid - self.owed) * 1000), -1),
                         "memo": self.memo,
-                        "payee_id": self.owner.split_transfer_payee_id,
+                        "payee_id": self.owner.account.transfer_payee_id,
                         "cleared": 'cleared',
                      },
                      {

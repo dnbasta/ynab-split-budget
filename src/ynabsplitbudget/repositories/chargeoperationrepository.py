@@ -4,9 +4,10 @@ from typing import List
 from src.ynabsplitbudget.builders.chargebuilder import ChargeBuilder, encrypt
 from src.ynabsplitbudget.builders.operationbuilder import OperationBuilder
 from src.ynabsplitbudget.models.charge import Charge
+from src.ynabsplitbudget.models.config import Config
 from src.ynabsplitbudget.models.operations import Operation
+from src.ynabsplitbudget.models.user import User
 from src.ynabsplitbudget.repositories.baserepository import BaseRepository
-from src.ynabsplitbudget.config import Config, ServerKnowledge, User
 from src.ynabsplitbudget.repositories.transactionlookuprepository import TransactionLookupRepository
 
 
@@ -15,7 +16,8 @@ class ChargeOperationRepository:
 	charges: List[Charge]
 	user_1_operations: List[Operation]
 	user_2_operations: List[Operation]
-	server_knowledge: ServerKnowledge
+	user_1_server_knowledge: int
+	user_2_server_knowledge: int
 	user_1: User
 	user_2: User
 
@@ -46,7 +48,8 @@ class ChargeOperationRepository:
 		return cls(charges=charges,
 				   user_1_operations=user_1_ops,
 				   user_2_operations=user_2_ops,
-				   server_knowledge=base_repo.server_knowledge,
+				   user_1_server_knowledge=base_repo.user_1_server_knowledge,
+				   user_2_server_knowledge=base_repo.user_2_server_knowledge,
 				   user_1=config.user_1,
 				   user_2=config.user_2)
 

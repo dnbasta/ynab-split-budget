@@ -2,8 +2,9 @@ from dataclasses import dataclass
 from typing import Optional
 
 from src.ynabsplitbudget.models.charge import Charge, ChargeNew, ChargeNewIncompleteRecipient, ChargeNewIncompleteOwner, ChargeChanged, ChargeOwnerDeleted, ChargeRecipientDeleted
+from src.ynabsplitbudget.models.config import Config
 from src.ynabsplitbudget.models.operations import Operation, OperationInsert, OperationSplit, OperationDelete, OperationUpdate
-from src.ynabsplitbudget.config import Config, User
+from src.ynabsplitbudget.models.user import User
 
 
 @dataclass

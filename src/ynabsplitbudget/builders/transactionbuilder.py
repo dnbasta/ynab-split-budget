@@ -2,7 +2,7 @@ import re
 from dataclasses import dataclass
 from datetime import datetime, date
 from src.ynabsplitbudget.models.transaction import Transaction, TransactionPaidSplit, TransactionOwed, Category, TransactionReference, TransactionPaidSplitPart, TransactionPaidDeleted, TransactionPaidTransfer, TransactionPaidToSplit
-from src.ynabsplitbudget.config import User
+from src.ynabsplitbudget.models.user import User
 
 
 @dataclass
@@ -18,7 +18,7 @@ class TransactionBuilder:
 		has_subtransactions = True if len(t_dict['subtransactions']) > 1 else False
 		has_transfer_to_splitwise = self._check_has_transfer_to_splitwise(t_dict)
 		has_flag = True if t_dict['flag_color'] == 'purple' else False
-		is_owed = True if t_dict['account_id'] == self.user.split_account and t_dict['transfer_account_id'] is None else False
+		is_owed = True if t_dict['account_id'] == self.user.account.account_id and t_dict['transfer_account_id'] is None else False
 		is_deleted = True if t_dict['deleted'] else False
 
 		if is_owed:
@@ -40,7 +40,7 @@ class TransactionBuilder:
 
 	def build_paid_split(self, t_dict: dict) -> TransactionPaidSplit:
 		subtransaction_transfer = next(st for st in t_dict['subtransactions']
-									   if st['payee_id'] == self.user.split_transfer_payee_id)
+									   if st['payee_id'] == self.user.account.transfer_payee_id)
 		subtransactions_owed = [st for st in t_dict['subtransactions'] if st['id'] != subtransaction_transfer['id']]
 
 		category = Category(id=subtransaction_transfer['category_id'],
@@ -174,10 +174,10 @@ class TransactionBuilder:
 
 	def _check_has_transfer_to_splitwise(self, t_dict: dict) -> bool:
 		if len(t_dict['subtransactions']) > 1:
-			if self.user.split_account in (s['transfer_account_id'] for s in t_dict['subtransactions']):
+			if self.user.account.account_id in (s['transfer_account_id'] for s in t_dict['subtransactions']):
 				return True
 			return False
-		elif t_dict['transfer_account_id'] == self.user.split_account:
+		elif t_dict['transfer_account_id'] == self.user.account.account_id:
 			return True
 		return False
 

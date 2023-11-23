@@ -6,35 +6,87 @@ from typing import List
 import requests
 from requests import Response
 
+from src.ynabsplitbudget.models.exception import BudgetNotFound, AccountNotFound
 from src.ynabsplitbudget.builders.transactionbuilder import TransactionBuilder
-from src.ynabsplitbudget.config import User
+from src.ynabsplitbudget.models.account import BaseAccount, Account
 from src.ynabsplitbudget.models.operations import OperationInsert, OperationUpdate, OperationDelete, Operation, OperationSplit
 from src.ynabsplitbudget.models.transaction import Transaction
+from src.ynabsplitbudget.models.user import User
 
 YNAB_BASE_URL = 'https://api.youneedabudget.com/v1/'
 
 
 @dataclass
-class Client:
+class BaseClient:
 	token: str
-	budget_id: str
-	splitwise_payee_id: str
-	account_id: str
-	last_server_knowledge: int
+
+	def fetch_account(self, budget_name: str, account_name: str, user_name: str) -> BaseAccount:
+		r = requests.get(f'{YNAB_BASE_URL}budgets?include_accounts=true', headers=self._header())
+		self._check_response(r)
+		r_dict = r.json()
+
+		try:
+			budget = next(b for b in r_dict['data']['budgets'] if b['name'] == budget_name)
+		except StopIteration:
+			raise BudgetNotFound(f"No budget with name '{budget_name} found for {user_name}'")
+
+		try:
+			account = next(a for a in budget['accounts'] if a['name'] == account_name and a['deleted'] is False)
+			transfer_payee_id = account['transfer_payee_id']
+		except StopIteration:
+			raise AccountNotFound(f"No Account with name '{account_name}' fund in budget '{budget_name} "
+								  f"for user {user_name}'")
+
+		return BaseAccount(budget_id=budget['id'],
+						   account_id=account['id'],
+						   transfer_payee_id=transfer_payee_id,
+						   budget_name=budget_name,
+						   account_name=account_name,
+						   currency=budget['currency_format']['iso_code'])
+
+	@staticmethod
+	def _check_response(response: Response):
+		r = response.json()
+		if 'errors' in r.keys() and len(r['errors']) > 0:
+			response.reason = r['errors']['base'][0]
+			response.status_code = 400
+		try:
+			response.raise_for_status()
+		except Exception as e:
+			print(response.request.path_url)
+			print(urllib.parse.unquote(response.request.body))
+			raise e
+
+	def _header(self):
+		return {'Authorization': f'Bearer {self.token}'}
+
+
+@dataclass
+class KnowledgeClient(BaseClient):
+	account: BaseAccount
+
+	def fetch_server_knowledge(self) -> int:
+		r = requests.get(f'{YNAB_BASE_URL}budgets/{self.account.budget_id}/accounts', headers=self._header())
+		self._check_response(r)
+		r_dict = r.json()
+		server_knowledge = r_dict['data']['server_knowledge']
+		return server_knowledge
+
+
+@dataclass
+class TransactionClient(KnowledgeClient):
+	account: Account
 	transaction_builder: TransactionBuilder
 
 	@classmethod
-	def from_config(cls, user: User, last_server_knowledge: int):
+	def from_config(cls, user: User):
 		return cls(token=user.token,
-				   budget_id=user.budget,
-				   splitwise_payee_id=user.split_transfer_payee_id,
-				   last_server_knowledge=last_server_knowledge,
-				   account_id=user.split_account,
+				   account=user.account,
 				   transaction_builder=TransactionBuilder.from_config(user=user))
 
 	def fetch_changed(self) -> (List[Transaction], int):
-		params = {'last_knowledge_of_server': self.last_server_knowledge}
-		r = requests.get(f'{YNAB_BASE_URL}budgets/{self.budget_id}/transactions',
+		params = {'last_knowledge_of_server': self.account.server_knowledge}
+		r = requests.get(f'{YNAB_BASE_URL}budgets/{self.account.budget_id}/transactions',
 						 params=params,
 						 headers=self._header())
 		self._check_response(r)
@@ -47,7 +99,7 @@ class Client:
 
 	def fetch_lookup(self, since: date):
 		params = {'since_date': datetime.strftime(since, '%Y-%m-%d')}
-		r = requests.get(f'{YNAB_BASE_URL}budgets/{self.budget_id}/transactions',
+		r = requests.get(f'{YNAB_BASE_URL}budgets/{self.account.budget_id}/transactions',
 						 params=params,
 						 headers=self._header())
 		self._check_response(r)
@@ -65,8 +117,8 @@ class Client:
 			self._delete(operation)
 
 	def _insert(self, ynab_op: OperationInsert) -> (int, int, int):
-		data = {'transactions': [{**ynab_op.as_dict(), **{'account_id': self.account_id}}]}
-		r = requests.post(f'{YNAB_BASE_URL}budgets/{self.budget_id}/transactions', json=data, headers=self._header())
+		data = {'transactions': [{**ynab_op.as_dict(), **{'account_id': self.account.account_id}}]}
+		r = requests.post(f'{YNAB_BASE_URL}budgets/{self.account.budget_id}/transactions', json=data, headers=self._header())
 		self._check_response(r)
 
 		r_dict = r.json()
@@ -77,17 +129,17 @@ class Client:
 
 	def _update(self, ynab_op: [OperationUpdate, OperationSplit]) -> None:
 		data = {'transaction': ynab_op.as_dict()}
-		r = requests.put(f'{YNAB_BASE_URL}budgets/{self.budget_id}/transactions/{ynab_op.id}', json=data,
+		r = requests.put(f'{YNAB_BASE_URL}budgets/{self.account.budget_id}/transactions/{ynab_op.id}', json=data,
 						 headers=self._header())
 		self._check_response(r)
 
 	def _delete(self, ynab_op: OperationDelete) -> None:
-		r = requests.delete(f'{YNAB_BASE_URL}budgets/{self.budget_id}/transactions/{ynab_op.id}',
+		r = requests.delete(f'{YNAB_BASE_URL}budgets/{self.account.budget_id}/transactions/{ynab_op.id}',
 							headers=self._header())
 		self._check_response(r)
 
 	def fetch_balance(self) -> float:
-		r = requests.get(f'{YNAB_BASE_URL}budgets/{self.budget_id}/accounts/{self.account_id}',
+		r = requests.get(f'{YNAB_BASE_URL}budgets/{self.account.budget_id}/accounts/{self.account.account_id}',
 						 headers=self._header())
 		self._check_response(r)
 		r_dict = r.json()
@@ -95,30 +147,7 @@ class Client:
 		amount = round(float(r_dict['data']['account']['balance']) / 1000, 2)
 		return amount
 
-	def fetch_server_knowledge(self) -> int:
-		r = requests.get(f'{YNAB_BASE_URL}budgets/{self.budget_id}/accounts', headers=self._header())
-		self._check_response(r)
-		r_dict = r.json()
-		server_knowledge = r_dict['data']['server_knowledge']
-		return server_knowledge
-
 	@staticmethod
 	def _filter_transactions_to_ignore(transactions_dict: List[dict]) -> List[dict]:
 		non_reconciled = [t for t in transactions_dict if t['cleared'] != 'reconciled']
 		return non_reconciled
-
-	def _header(self):
-		return {'Authorization': f'Bearer {self.token}'}
-
-	@staticmethod
-	def _check_response(response: Response):
-		r = response.json()
-		if 'errors' in r.keys() and len(r['errors']) > 0:
-			response.reason = r['errors']['base'][0]
-			response.status_code = 400
-		try:
-			response.raise_for_status()
-		except Exception as e:
-			print(response.request.path_url)
-			print(urllib.parse.unquote(response.request.body))
-			raise e

@@ -3,9 +3,9 @@ import re
 from dataclasses import dataclass
 from typing import Optional, Union
 
-from src.ynabsplitbudget.config import User
 from src.ynabsplitbudget.models.transaction import TransactionPaidSplit, TransactionOwed, TransactionPaid, TransactionReference, TransactionPaidSplitPart, TransactionPaidDeleted, TransactionPaidToSplit, TransactionPaidTransfer, Transaction
 from src.ynabsplitbudget.models.charge import Charge, ChargeNew, ChargeOwnerDeleted, ChargeNewIncompleteRecipient, ChargeRecipientDeleted, ChargeNewIncompleteOwner, ChargeChanged
+from src.ynabsplitbudget.models.user import User
 from src.ynabsplitbudget.repositories.transactionlookuprepository import TransactionLookupRepository
 
 

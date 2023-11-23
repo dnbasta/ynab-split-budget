@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Optional
 
-from src.ynabsplitbudget.config import User
 from src.ynabsplitbudget.models.transaction import Category
+from src.ynabsplitbudget.models.user import User
 
 
 @dataclass(eq=True, frozen=True)
