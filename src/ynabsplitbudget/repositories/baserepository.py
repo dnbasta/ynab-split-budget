@@ -17,8 +17,8 @@ class BaseRepository:
 
 	@classmethod
 	def from_config(cls, config: Config):
-		user_client = TransactionClient.from_config(user=config.user_1)
-		partner_client = TransactionClient.from_config(user=config.user_2)
+		user_client = TransactionClient.from_user(user=config.user_1)
+		partner_client = TransactionClient.from_user(user=config.user_2)
 
 		# fetch changed records
 		user_changed, user_server_knowledge = user_client.fetch_changed()

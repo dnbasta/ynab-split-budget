@@ -82,8 +82,8 @@ class YnabSplitBudget:
 
     def process_charges(self, fetch_result: FetchResult):
 
-        user_1_client = TransactionClient.from_config(user=self._config.user_1)
-        user_2_client = TransactionClient.from_config(user=self._config.user_2)
+        user_1_client = TransactionClient.from_user(user=self._config.user_1)
+        user_2_client = TransactionClient.from_user(user=self._config.user_2)
 
         [user_1_client.process_operation(o) for o in fetch_result.user_1.operations]
         [user_2_client.process_operation(o) for o in fetch_result.user_2.operations]

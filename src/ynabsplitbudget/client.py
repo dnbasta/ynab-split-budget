@@ -79,7 +79,7 @@ class TransactionClient(KnowledgeClient):
 	transaction_builder: TransactionBuilder
 
 	@classmethod
-	def from_config(cls, user: User):
+	def from_user(cls, user: User):
 		return cls(token=user.token,
 				   account=user.account,
 				   transaction_builder=TransactionBuilder.from_config(user=user))
@@ -87,6 +87,19 @@ class TransactionClient(KnowledgeClient):
 	def fetch_changed(self) -> (List[Transaction], int):
 		params = {'last_knowledge_of_server': self.account.server_knowledge}
 		r = requests.get(f'{YNAB_BASE_URL}budgets/{self.account.budget_id}/transactions',
+						 params=params,
+						 headers=self._header())
+		self._check_response(r)
+		r_dict = r.json()
+
+		transactions_dicts = self._filter_transactions_to_ignore(r_dict['data']['transactions'])
+		transactions = [self.transaction_builder.build(t_dict=t) for t in transactions_dicts]
+		server_knowledge = r_dict['data']['server_knowledge']
+		return transactions, server_knowledge
+
+	def fetch_splits(self) -> (List[Transaction], int):
+		params = {'last_knowledge_of_server': self.account.server_knowledge}
+		r = requests.get(f'{YNAB_BASE_URL}budgets/{self.account.budget_id}/accounts/{self.account.account_id}/transactions',
 						 params=params,
 						 headers=self._header())
 		self._check_response(r)
