@@ -1,10 +1,10 @@
-# ynab-split-budget
+# ynab-split-account
 
 [![GitHub Release](https://img.shields.io/github/release/dnbasta/ynab-split-budget?style=flat)]() 
 
 This library enables cost sharing across two YNAB budgets. It requires two dedicated accounts in each budget to which
-each budget owner can transfer amounts from their own budget. This transfer is considered as an asset and 
-creates a liability of equal size in the other account.
+each budget owner can transfer amounts from their own budget. Each transfer is considered as its opposite in the other 
+account.
 
 ## Preparations in YNAB
 1. Create a checking account for the cost sharing in both YNAB budgets.
@@ -13,7 +13,7 @@ creates a liability of equal size in the other account.
 ## Install library from PyPI
 
 ```bash
-pip install ynab-split-budget
+pip install ynab-split-account
 ```
 
 ## Create `config.yaml`
@@ -23,66 +23,38 @@ user_1:
   name: <name>
   token: <ynab_token>
   budget: <ynab_budget_name>
-  account: <ynab_budget_account>
+  account: <ynab_budget_account_name>
 user_2:
   name: <name>
   token: <ynab_token>
   budget: <ynab_budget_name>
-  account: <ynab_budget_account>
+  account: <ynab_budget_account_name>
 ```
-## Fetch current Server Knowledge
- The server knowledge represents the current knowledge state of a YNAB account. It is an integer which increases 
- each time there is a change in the respective account. This library uses the server knowledge to determine which
- changes have not been considered yet. It updates the server knowledge after each process run and writes the values 
- into the config file.
 
-#### via command line
-```bash
-$ python -m <path/config.yaml> -s
-server knowledge: <user_1_name>: <int>, <user_2_name>: <int>
-```
-#### as python library
-```python
-from ynabsplitbudget import YnabSplitBudget
-
-ynab_split_budget = YnabSplitBudget()
-ynab_split_budget.load_config(path='path/config.yaml')
-ynab_split_budget.update_server_knowledge()
-```
 ## Usage
 ### YNAB
-#### Option 1: 
 Create a transfer to the cost sharing account.
-#### Option 2:
-Mark a transaction in your budget with the purple flag. This library will detect that transaction and create a 
-by default a 50% split transaction and transfer that to the cost sharing account. If you would like an automatic split 
-with another percentage you can put a marker in the form of `@<int>` the memo line. This will create a transfer 
-transaction with that percentage amount.
-
-![flag-memo](https://github.com/dnbasta/ynab-split-budget/assets/20659030/1216037b-cd4e-4e5c-93df-7f9e2a433dba)
-
 
 ### ynab-split-budget
 
 #### as python library
 
 ```py
-from ynabsplitbudget import YnabSplitBudget
+from ynabsplitaccount import YnabSplitAccount
 
 # initialize
-ynab_split_budget = YnabSplitBudget()
-ynab_split_budget.load_config(path='path/config.yaml')
+ynab_split_account = YnabSplitAccount(path='path/config.yaml')
 
-# fetch charges which require sync
-fetch_response = ynab_split_budget.fetch_charges()
+# fetch transactions to sync
+transactions_to_share = ynab_split_account.fetch_share_transations()
 
-# sync charges across both accounts
-ynab_split_budget.process_charges(fetch_response)
+# sync transactions across both accounts
+ynab_split_account.insert_share_transactions(transactions_to_share)
 ```
 #### via command line
 ```bash
-# fetch and process charges which require sync
-$ python -m <path/config.yaml> -p
+# fetch and synchronize transactions
+$ python -m <path/config.yaml> -s
 ```
 
 ## Development

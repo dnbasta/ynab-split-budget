@@ -1,23 +1,16 @@
-import logging
 import string
 import random
 import typing
-from typing import get_type_hints, Dict, DefaultDict
+from typing import get_type_hints
 from unittest.mock import MagicMock
 
 import pytest
 import os
 
-from src.ynabsplitbudget.builders.configbuilder import ConfigBuilder
-
 
 @pytest.fixture
 def prod_conf_path():
 	return f'{os.path.dirname(os.path.dirname(os.path.realpath(__file__)))}/config.yaml'
-
-@pytest.fixture
-def prod_conf(prod_conf_path):
-	return ConfigBuilder(path=prod_conf_path).build_from_path()
 
 
 def random_str() -> str:
@@ -56,3 +49,28 @@ def create_mock_object(class_type: type, attr: dict = None):
 			th[k] = v
 
 	return class_type(**th)
+
+
+@pytest.fixture
+def mock_transaction_dict():
+	return {'id': 'sample_id',
+			'memo': 'sample_memo',
+			'payee_name': 'sample_payee',
+			'deleted': False,
+			'account_id': 'sample_account',
+			'amount': 10,
+			'date': '2023-10-01',
+			'cleared': 'cleared',
+			'import_id': None}
+
+
+@pytest.fixture
+def mock_budget():
+	return {'id': 'sample_budget_id',
+			'name': 'sample_budget_name',
+			'currency_format': {'iso_code': 'sample_iso_code'},
+			'accounts': [{'id': 'sample_account_id',
+			   		      'name': 'sample_account_name',
+						  'deleted': False,
+						  'transfer_payee_id': 'sample_transfer_payee_id'}],
+															 }

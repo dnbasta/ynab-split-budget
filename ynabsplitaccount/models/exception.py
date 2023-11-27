@@ -1,5 +1,5 @@
-from src.ynabsplitbudget.models.account import Account
-from src.ynabsplitbudget.models.config import ConfigMissingKnowledge
+from ynabsplitaccount.models.account import Account
+from ynabsplitaccount.models.config import ConfigMissingKnowledge
 
 
 class NoServerKnowledge(Exception):

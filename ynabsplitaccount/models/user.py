@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Union
 
-from src.ynabsplitbudget.models.account import Account, BaseAccount
+from ynabsplitaccount.models.account import Account, BaseAccount
 
 
 @dataclass(eq=True, frozen=True)

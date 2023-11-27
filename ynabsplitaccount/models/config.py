@@ -3,14 +3,13 @@ from typing import List
 
 import yaml
 
-from src.ynabsplitbudget.models.user import User
+from ynabsplitaccount.models.user import User
 
 
 @dataclass(eq=True, frozen=True)
 class BaseConfig:
 	user_1: User
 	user_2: User
-	path: str
 
 	def save(self):
 		config_dict = {
