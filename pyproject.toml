@@ -9,7 +9,7 @@ authors = ["Daniel Basta <ynab@basta.info>"]
 description = "Library to balance You Need A Budget (YNAB) account with counterpart in different budget"
 readme = "README.md"
 license = 'MIT'
-packages = [{include = 'ynabsplitaccount', from = 'src'}]
+packages = [{include = 'ynabsplitaccount'}]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
