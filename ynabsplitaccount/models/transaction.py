@@ -3,7 +3,7 @@ from datetime import date, datetime
 
 
 @dataclass(eq=True, frozen=True)
-class ShareTransaction:
+class Transaction:
 	id: str
 	share_id: str
 	transaction_date: date
@@ -24,10 +24,10 @@ class ShareTransaction:
 
 
 @dataclass(eq=True, frozen=True)
-class ShareTransactionParent(ShareTransaction):
+class RootTransaction(Transaction):
 	pass
 
 
 @dataclass(eq=True, frozen=True)
-class ShareTransactionChild(ShareTransaction):
+class ComplementTransaction(Transaction):
 	pass

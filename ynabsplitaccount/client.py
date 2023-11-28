@@ -1,15 +1,13 @@
-import urllib.parse
 from dataclasses import dataclass
 from datetime import date, datetime
 from typing import List
 
 import requests
-from requests import Response
 
-from ynabsplitaccount.builders.sharetransactionbuilder import ShareTransactionBuilder
+from ynabsplitaccount.transactionbuilder import TransactionBuilder
 from ynabsplitaccount.models.exception import BudgetNotFound, AccountNotFound
-from ynabsplitaccount.models.account import BaseAccount
-from ynabsplitaccount.models.sharetransaction import ShareTransaction, ShareTransactionParent
+from ynabsplitaccount.models.account import Account
+from ynabsplitaccount.models.transaction import Transaction, RootTransaction
 from ynabsplitaccount.models.user import User
 
 YNAB_BASE_URL = 'https://api.ynab.com/v1/'
@@ -18,28 +16,15 @@ YNAB_BASE_URL = 'https://api.ynab.com/v1/'
 class ClientMixin:
 
 	@staticmethod
-	def _check_response(response: Response):
-		r = response.json()
-		if 'errors' in r.keys() and len(r['errors']) > 0:
-			response.reason = r['errors']['base'][0]
-			response.status_code = 400
-		try:
-			response.raise_for_status()
-		except Exception as e:
-			print(response.request.path_url)
-			print(urllib.parse.unquote(response.request.body))
-			raise e
-
-	@staticmethod
 	def _header(token: str):
 		return {'Authorization': f'Bearer {token}'}
 
 
 class BaseClient(ClientMixin):
 
-	def fetch_account(self, budget_name: str, account_name: str, token: str, user_name: str) -> BaseAccount:
+	def fetch_account(self, budget_name: str, account_name: str, token: str, user_name: str) -> Account:
 		r = requests.get(f'{YNAB_BASE_URL}budgets?include_accounts=true', headers=self._header(token))
-		self._check_response(r)
+		r.raise_for_status()
 		r_dict = r.json()
 
 		try:
@@ -54,19 +39,19 @@ class BaseClient(ClientMixin):
 			raise AccountNotFound(f"No Account with name '{account_name}' fund in budget '{budget_name} "
 								  f"for user {user_name}'")
 
-		return BaseAccount(budget_id=budget['id'],
-						   account_id=account['id'],
-						   transfer_payee_id=transfer_payee_id,
-						   budget_name=budget_name,
-						   account_name=account_name,
-						   currency=budget['currency_format']['iso_code'])
+		return Account(budget_id=budget['id'],
+					   account_id=account['id'],
+					   transfer_payee_id=transfer_payee_id,
+					   budget_name=budget_name,
+					   account_name=account_name,
+					   currency=budget['currency_format']['iso_code'])
 
 
 @dataclass
-class ShareTransactionClient(BaseClient):
+class TransactionClient(BaseClient):
 	user: User
 
-	def fetch_changed(self) -> (List[ShareTransaction], int):
+	def fetch_changed(self) -> (List[Transaction], int):
 		url = (f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/accounts/'
 			   f'{self.user.account.account_id}/transactions')
 
@@ -81,7 +66,7 @@ class ShareTransactionClient(BaseClient):
 		server_knowledge = data_dict['server_knowledge']
 		return self._build_transactions(transactions_dicts), server_knowledge
 
-	def fetch_lookup(self, since: date) -> List[ShareTransaction]:
+	def fetch_lookup(self, since: date) -> List[Transaction]:
 		params = {'since_date': datetime.strftime(since, '%Y-%m-%d')}
 		url = (f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/accounts/'
 			   f'{self.user.account.account_id}/transactions')
@@ -92,7 +77,7 @@ class ShareTransactionClient(BaseClient):
 
 		return self._build_transactions(data_dict['transactions'])
 
-	def insert_child(self, t: ShareTransactionParent):
+	def insert_child(self, t: RootTransaction):
 
 		data = {'transaction': {
 			"account_id": self.user.account.account_id,
@@ -109,7 +94,7 @@ class ShareTransactionClient(BaseClient):
 		r.raise_for_status()
 
 	@staticmethod
-	def _build_transactions(t_dicts: List[dict]) -> List[ShareTransaction]:
-		stb = ShareTransactionBuilder()
+	def _build_transactions(t_dicts: List[dict]) -> List[Transaction]:
+		stb = TransactionBuilder()
 		transactions = [stb.build(t_dict=t) for t in t_dicts]
 		return transactions

@@ -4,10 +4,10 @@ from unittest.mock import patch, MagicMock
 import pytest
 from requests import Response
 
-from ynabsplitaccount.client import BaseClient, ShareTransactionClient
-from ynabsplitaccount.models.account import BaseAccount
+from ynabsplitaccount.client import BaseClient, TransactionClient
+from ynabsplitaccount.models.account import Account
 from ynabsplitaccount.models.exception import BudgetNotFound, AccountNotFound
-from ynabsplitaccount.models.sharetransaction import ShareTransactionParent, ShareTransactionChild
+from ynabsplitaccount.models.transaction import RootTransaction
 
 
 @pytest.mark.parametrize('budget, account, expected', [('bullshit', 'bullshit', BudgetNotFound),
@@ -35,7 +35,7 @@ def test_fetch_account_passes(mock_budget):
 								 account_name='sample_account_name', user_name='sample_user', token='sample_token')
 
 	# Assert
-	assert isinstance(a, BaseAccount)
+	assert isinstance(a, Account)
 	assert a.account_id == 'sample_account_id'
 	assert a.budget_id == 'sample_budget_id'
 	assert a.account_name == 'sample_account_name'
@@ -51,12 +51,12 @@ def test_fetch_share_transactions_parent(mock_transaction_dict):
 												'server_knowledge': 100}}
 	# Act
 	with patch('ynabsplitaccount.client.requests.get', return_value=mock_response):
-		c = ShareTransactionClient(MagicMock())
+		c = TransactionClient(MagicMock())
 		r = c.fetch_changed()
 
 	# Assert
 	t = r[0][0]
-	assert isinstance(t, ShareTransactionParent)
+	assert isinstance(t, RootTransaction)
 	assert t.share_id == '6f66e5aa449e868261ce'
 	assert t.account_id == 'sample_account'
 	assert t.amount == -0.01
@@ -73,7 +73,7 @@ def test_fetch_share_transactions_empty(mock_transaction_dict):
 												'server_knowledge': 100}}
 	# Act
 	with patch('ynabsplitaccount.client.requests.get', return_value=mock_response):
-		c = ShareTransactionClient(MagicMock())
+		c = TransactionClient(MagicMock())
 		r = c.fetch_changed()
 
 	# Assert

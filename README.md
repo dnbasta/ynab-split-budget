@@ -32,11 +32,9 @@ user_2:
 ```
 
 ## Usage
-### YNAB
-Create a transfer to the cost sharing account.
-
-### ynab-split-budget
-
+1. Create a transaction in or transfer to the cost sharing account in YNAB. It needs to be cleared and not yet 
+reconciled in order to be recognized by the library.
+2. Run this library either as python libary or from the command line 
 #### as python library
 
 ```py
@@ -45,16 +43,16 @@ from ynabsplitaccount import YnabSplitAccount
 # initialize
 ynab_split_account = YnabSplitAccount(path='path/config.yaml')
 
-# fetch transactions to sync
-transactions_to_share = ynab_split_account.fetch_share_transations()
+# fetch new transactions from both accounts
+transactions_to_share = ynab_split_account.fetch_new()
 
-# sync transactions across both accounts
-ynab_split_account.insert_share_transactions(transactions_to_share)
+# insert complement transactions in partner account
+ynab_split_account.insert_complement(transactions_to_share)
 ```
 #### via command line
 ```bash
-# fetch and synchronize transactions
-$ python -m <path/config.yaml> -s
+# fetch new transactions from both accounts and insert complements
+$ python -m <path/config.yaml> -fi | --fetch-insert
 ```
 
 ## Development

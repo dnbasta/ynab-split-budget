@@ -2,11 +2,11 @@ from pathlib import Path
 
 import yaml
 
-from ynabsplitaccount.client import BaseClient, ShareTransactionClient
+from ynabsplitaccount.client import BaseClient, TransactionClient
 from ynabsplitaccount.models.config import Config
-from ynabsplitaccount.models.toshareresponse import ToShareResponse, ToShareResponseItem
+from ynabsplitaccount.models.response import Response, ResponseItem
 from ynabsplitaccount.models.user import User
-from ynabsplitaccount.repositories.sharetransactionrepository import ShareTransactionRepository
+from ynabsplitaccount.transactionrepository import TransactionRepository
 
 
 class YnabSplitAccount:
@@ -24,16 +24,20 @@ class YnabSplitAccount:
 										  token=user_dict['token'])
 		return User(name=user_dict['name'], token=user_dict['token'], account=account)
 
-	def fetch_share_transactions(self) -> ToShareResponse:
-		strepo = ShareTransactionRepository.from_config(self._config)
-		return ToShareResponse(user_1=ToShareResponseItem(name=self._config.user_1.name,
-												   transactions=strepo.fetch_new_user_1()),
-							   user_2=ToShareResponseItem(name=self._config.user_2.name,
-												   transactions=strepo.fetch_new_user_2()))
+	def fetch_new(self) -> Response:
+		st_repo = TransactionRepository.from_config(self._config)
+		print(f'fetched new: {self._config.user_1.name}: {len(st_repo.fetch_new_user_1())} '
+			  f'{self._config.user_2.name}: {len(st_repo.fetch_new_user_2())}')
+		return Response(user_1=ResponseItem(name=self._config.user_1.name,
+												   transactions=st_repo.fetch_new_user_1()),
+						user_2=ResponseItem(name=self._config.user_2.name,
+												   transactions=st_repo.fetch_new_user_2()))
 
-	def insert_share_transactions(self, response: ToShareResponse):
-		u1c = ShareTransactionClient(user=self._config.user_1)
-		u2c = ShareTransactionClient(user=self._config.user_2)
+	def insert_complement(self, response: Response):
+		u1c = TransactionClient(user=self._config.user_1)
+		u2c = TransactionClient(user=self._config.user_2)
 
 		[u1c.insert_child(t) for t in response.user_2.transactions]
 		[u2c.insert_child(t) for t in response.user_1.transactions]
+		print(f'inserted complements: {self._config.user_1.name}: {len(response.user_2.transactions)} '
+			  f'{self._config.user_2.name}: {len(response.user_1.transactions)}')

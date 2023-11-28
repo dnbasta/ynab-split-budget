@@ -16,21 +16,21 @@ if __name__ == '__main__':
 
 	parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
 									 usage='ynabsplitaccount <config_path> '
-										   '[-fo | --fetch-only] [-s | --sync]')
+										   '[-f | --fetch] [-fi | --fetch-insert]')
 	parser.add_argument("-f", "--fetch", action="store_true",
-						help="fetch contributed transactions across both budgets")
-	parser.add_argument("-s", "--sync", action="store_true",
-						help="sync contributed transactions across both budgets")
+						help="fetch new transactions from both budgets")
+	parser.add_argument("-fi", "--fetch-insert", action="store_true",
+						help="fetch new transactions from both accounts and insert complements")
 	parser.add_argument("config_path", help="path of config YAML to use")
 	args = parser.parse_args()
 
 	warnings.showwarning = custom_warn
 	ysa = YnabSplitAccount(path=args.config_path)
 
-	if args.sync:
-		r = ysa.fetch_share_transactions()
-		ysa.insert_share_transactions(r)
+	if args.fetch_insert:
+		r = ysa.fetch_new()
+		ysa.insert_complement(r)
 	if args.fetch:
-		sys.stdout.write(json.dumps(asdict(ysa.fetch_share_transactions())))
+		sys.stdout.write(json.dumps(asdict(ysa.fetch_new())))
 
 
