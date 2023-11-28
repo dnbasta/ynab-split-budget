@@ -10,7 +10,7 @@ from ynabsplitaccount.transactionrepository import TransactionRepository
 def test_from_config(mock_lookup, mock_changed):
 	# Arrange
 	mock_transaction = MagicMock(spec=RootTransaction, transaction_date=date(2023, 10, 1))
-	mock_changed.return_value = ([mock_transaction], 100)
+	mock_changed.return_value = [mock_transaction]
 	mock_lookup.return_value = [mock_transaction]
 	# Act
 	strepo = TransactionRepository.from_config(MagicMock())
@@ -19,15 +19,13 @@ def test_from_config(mock_lookup, mock_changed):
 	assert isinstance(strepo.user_2_changed[0], RootTransaction)
 	assert isinstance(strepo.user_1_lookup[0], RootTransaction)
 	assert isinstance(strepo.user_2_lookup[0], RootTransaction)
-	assert strepo.user_1_server_knowledge == 100
-	assert strepo.user_2_server_knowledge == 100
 
 
 @patch('ynabsplitaccount.client.TransactionClient.fetch_changed')
 @patch('ynabsplitaccount.client.TransactionClient.fetch_lookup')
 def test_from_config_empty(mock_lookup, mock_changed):
 	# Arrange
-	mock_changed.return_value = ([], 100)
+	mock_changed.return_value = []
 	mock_lookup.return_value = []
 	# Act
 	strepo = TransactionRepository.from_config(MagicMock())
@@ -36,8 +34,6 @@ def test_from_config_empty(mock_lookup, mock_changed):
 	assert len(strepo.user_2_changed) == 0
 	assert len(strepo.user_2_lookup) == 0
 	assert len(strepo.user_2_lookup) == 0
-	assert strepo.user_1_server_knowledge == 100
-	assert strepo.user_2_server_knowledge == 100
 
 
 def test_fetch_new_new():
@@ -47,9 +43,7 @@ def test_fetch_new_new():
 	strepo = TransactionRepository(user_1_changed=[mock_parent],
 								   user_2_changed=[],
 								   user_1_lookup=[],
-								   user_2_lookup=[mock_child],
-								   user_1_server_knowledge=100,
-								   user_2_server_knowledge=100)
+								   user_2_lookup=[mock_child])
 
 	# Act
 	t1 = strepo.fetch_new_user_1()
@@ -66,9 +60,7 @@ def test_fetch_new_exists():
 	strepo = TransactionRepository(user_1_changed=[mock_parent],
 								   user_2_changed=[],
 								   user_1_lookup=[],
-								   user_2_lookup=[mock_child],
-								   user_1_server_knowledge=100,
-								   user_2_server_knowledge=100)
+								   user_2_lookup=[mock_child])
 
 	# Act
 	t1 = strepo.fetch_new_user_1()

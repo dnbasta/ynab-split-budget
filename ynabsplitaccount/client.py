@@ -51,7 +51,7 @@ class BaseClient(ClientMixin):
 class TransactionClient(BaseClient):
 	user: User
 
-	def fetch_changed(self) -> (List[Transaction], int):
+	def fetch_changed(self) -> List[Transaction]:
 		url = (f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/accounts/'
 			   f'{self.user.account.account_id}/transactions')
 
@@ -63,8 +63,7 @@ class TransactionClient(BaseClient):
 							  and t['deleted'] is False
 							  and (t['import_id'] is None or 's||' not in t['import_id'])]
 
-		server_knowledge = data_dict['server_knowledge']
-		return self._build_transactions(transactions_dicts), server_knowledge
+		return self._build_transactions(transactions_dicts)
 
 	def fetch_lookup(self, since: date) -> List[Transaction]:
 		params = {'since_date': datetime.strftime(since, '%Y-%m-%d')}

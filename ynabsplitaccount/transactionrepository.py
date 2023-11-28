@@ -12,8 +12,6 @@ class TransactionRepository:
 	user_2_changed: List[Transaction]
 	user_1_lookup: List[Transaction]
 	user_2_lookup: List[Transaction]
-	user_1_server_knowledge: int
-	user_2_server_knowledge: int
 
 	@classmethod
 	def from_config(cls, config: Config):
@@ -21,8 +19,8 @@ class TransactionRepository:
 		u2c = TransactionClient(user=config.user_2)
 
 		# fetch changed
-		u1t, u1sk = u1c.fetch_changed()
-		u2t, u2sk = u2c.fetch_changed()
+		u1t = u1c.fetch_changed()
+		u2t = u2c.fetch_changed()
 
 		# fetch lookup records
 		try:
@@ -36,9 +34,7 @@ class TransactionRepository:
 		return cls(user_1_changed=u1t,
 				   user_2_changed=u2t,
 				   user_1_lookup=u1l,
-				   user_2_lookup=u2l,
-				   user_1_server_knowledge=u1sk,
-				   user_2_server_knowledge=u2sk)
+				   user_2_lookup=u2l)
 
 	def fetch_new_user_1(self) -> List[RootTransaction]:
 		return [t for t in self.user_1_changed if isinstance(t, RootTransaction) and self._find_child(t) is None]
