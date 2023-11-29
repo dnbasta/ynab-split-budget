@@ -3,11 +3,10 @@ from typing import List
 
 import yaml
 
-from ynabsplitbudget.client import BaseClient, SyncClient
+from ynabsplitbudget.client import BaseClient, SyncClient, SplitClient
 from ynabsplitbudget.models.categorysplit import CategorySplit
 from ynabsplitbudget.models.config import Config
 from ynabsplitbudget.models.flagsplit import FlagSplit
-from ynabsplitbudget.models.response import Response, ResponseItem
 from ynabsplitbudget.models.user import User
 from ynabsplitbudget.transactionrepository import TransactionRepository
 
@@ -39,21 +38,20 @@ class YnabSplitBudget:
 	def _load_flag_splits(flags: List[dict]) -> List[FlagSplit]:
 		return [FlagSplit(color=c['color'], split=c['split']) for c in flags]
 
+	def _fetch_user(self, user_name: str):
+		return next(u for u in (self._config.user_1, self._config.user_2) if u.name == user_name)
 
-	def fetch_new(self) -> Response:
-		st_repo = TransactionRepository(self._config).populate()
-		print(f'fetched new: {self._config.user_1.name}: {len(st_repo.user_1)} '
-			  f'{self._config.user_2.name}: {len(st_repo.user_2)}')
-		return Response(user_1=ResponseItem(name=self._config.user_1.name,
-												   transactions=st_repo.user_1),
-						user_2=ResponseItem(name=self._config.user_2.name,
-												   transactions=st_repo.user_2))
+	def insert_complements(self, user_name: str):
+		user = self._fetch_user(user_name)
+		partner = self._config.user_1 if user == self._config.user_2 else self._config.user_2
+		st_repo = TransactionRepository(user=user, partner=partner).populate()
+		c = SyncClient(partner)
 
-	def insert_complement(self, response: Response):
-		u1c = SyncClient(user=self._config.user_1)
-		u2c = SyncClient(user=self._config.user_2)
+		[c.insert_complement(t) for t in st_repo.transactions]
+		print(f'inserted {len(st_repo.transactions)} complements into account from {partner.name}')
 
-		[u1c.insert_complement(t) for t in response.user_2.transactions]
-		[u2c.insert_complement(t) for t in response.user_1.transactions]
-		print(f'inserted complements: {self._config.user_1.name}: {len(response.user_2.transactions)} '
-			  f'{self._config.user_2.name}: {len(response.user_1.transactions)}')
+	def split_transactions(self, user_name: str):
+		c = SplitClient(self._fetch_user(user_name))
+		st_list = c.fetch_new_to_split()
+		[c.insert_split(st) for st in st_list]
+		print(f'split {len(st_list)} transactions for {user_name}')

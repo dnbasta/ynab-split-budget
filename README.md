@@ -1,4 +1,4 @@
-# ynab-split-account
+# ynab-split-budget
 
 [![GitHub Release](https://img.shields.io/github/release/dnbasta/ynab-split-budget?style=flat)]() 
 
@@ -13,48 +13,57 @@ account.
 ## Install library from PyPI
 
 ```bash
-pip install ynab-split-account
+pip install ynab-split-budget
 ```
 
 ## Create `config.yaml`
 Save the file at a convenient space and provide the path and name to the library when initializing
 ```yaml
 user_1:
-  name: <name>
+  name: <user_name>
   token: <ynab_token>
   budget: <ynab_budget_name>
   account: <ynab_budget_account_name>
+  flags:
+    - color: blue
+      split: 0.5
+    - color: purple
+      split: 0.33
 user_2:
-  name: <name>
+  name: <user_name>
   token: <ynab_token>
   budget: <ynab_budget_name>
   account: <ynab_budget_account_name>
+  flags:
+    - color: orange
+      split: 0.5
+    - color: red
+      split: 0.25
 ```
 
 ## Usage
-1. Create a transaction in or transfer to the cost sharing account in YNAB. It needs to be cleared and not yet 
-reconciled in order to be recognized by the library.
-2. Run this library either as python libary or from the command line 
-#### as python library
-
+1. Create a transaction somewhere in your budget and add one of the defined color flags. It needs to be cleared and not
+yet reconciled to be picked up by the library.
+2. Run the split functionality either as python library or from the command line.
 ```py
-from ynabsplitbudget import YnabSplitAccount
+from ynabsplitbudget import YnabSplitBudget
 
-# initialize
-ynab_split_account = YnabSplitAccount(path='path/config.yaml')
+ynab_split_budget = YnabSplitBudget('path/config.yaml')
+ynab_split_budget.split_transactions('user_name')
 
-# fetch new transactions from both accounts
-transactions_to_share = ynab_split_account.fetch_new()
-
-# insert complement transactions in partner account
-ynab_split_account.insert_complement(transactions_to_share)
 ```
-#### via command line
 ```bash
-# fetch new transactions from both accounts and insert complements
-$ python -m <path/config.yaml> -fi | --fetch-insert
+$ python -m -c <path/config.yaml> -u <user_name> -s | --sync-transactions
 ```
+3. Clear the newly split transactions in the account you created for sharing.
+4. Run the insert functionality either as python library or from the command line
+```py
+ynab_split_budget.insert_complements('user_name')
 
+```
+```bash
+$ python -m -c <path/config.yaml> -u <user_name> -i | --insert-complements
+```
 ## Development
 
 Read the [CONTRIBUTING.md](CONTRIBUTING.md) file.
