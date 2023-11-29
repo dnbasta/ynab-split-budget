@@ -20,7 +20,24 @@ def mock_budget():
 			'name': 'sample_budget_name',
 			'currency_format': {'iso_code': 'sample_iso_code'},
 			'accounts': [{'id': 'sample_account_id',
-			   		      'name': 'sample_account_name',
+						  'name': 'sample_account_name',
 						  'deleted': False,
-						  'transfer_payee_id': 'sample_transfer_payee_id'}],
-															 }
+						  'transfer_payee_id': 'sample_transfer_payee_id'}]
+			}
+
+
+@pytest.fixture
+def mock_config_dict():
+	return {'user_1': {
+			'name': 'name1',
+			'token': 'token1',
+			'account': 'account1',
+			'budget': 'budget1',
+			'flags': [{'color': 'purple', 'split': 0.5}],
+			'categories': [{'name': 'sample_category', 'split': 0.5}]},
+			'user_2': {
+				'name': 'name2',
+				'token': 'token2',
+				'account': 'account2',
+				'budget': 'budget2'}
+		}

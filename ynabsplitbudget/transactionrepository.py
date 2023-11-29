@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List, Optional
 
-from ynabsplitbudget.client import TransactionClient
+from ynabsplitbudget.client import SyncClient
 from ynabsplitbudget.models.config import Config
 from ynabsplitbudget.models.transaction import Transaction, RootTransaction, ComplementTransaction, LookupTransaction
 
@@ -13,12 +13,12 @@ class TransactionRepository:
 	user_2: List[RootTransaction] = field(default_factory=lambda: [])
 
 	def populate(self):
-		u1c = TransactionClient(user=self.config.user_1)
-		u2c = TransactionClient(user=self.config.user_2)
+		u1c = SyncClient(user=self.config.user_1)
+		u2c = SyncClient(user=self.config.user_2)
 
 		# fetch changed
-		u1t = u1c.fetch_changed()
-		u2t = u2c.fetch_changed()
+		u1t = u1c.fetch_new()
+		u2t = u2c.fetch_new()
 
 		# fetch lookup records
 		try:
