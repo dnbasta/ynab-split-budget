@@ -48,10 +48,10 @@ class BaseClient(ClientMixin):
 
 
 @dataclass
-class TransactionClient(BaseClient):
+class SyncClient(BaseClient):
 	user: User
 
-	def fetch_changed(self) -> List[RootTransaction]:
+	def fetch_new(self) -> List[RootTransaction]:
 		url = (f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/accounts/'
 			   f'{self.user.account.account_id}/transactions')
 
@@ -81,7 +81,7 @@ class TransactionClient(BaseClient):
 
 		return transactions
 
-	def insert_child(self, t: RootTransaction):
+	def insert_complement(self, t: RootTransaction):
 
 		data = {'transaction': {
 			"account_id": self.user.account.account_id,
@@ -96,3 +96,23 @@ class TransactionClient(BaseClient):
 		r = requests.post(f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/transactions', json=data,
 						  headers=self._header(self.user.token))
 		r.raise_for_status()
+
+
+@dataclass
+class SplitClient(BaseClient):
+	user: User
+
+	def fetch_new_to_split(self) -> List[Transaction]:
+		url = f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/transactions'
+
+		r = requests.get(url, headers=self._header(self.user.token))
+		r.raise_for_status()
+		data_dict = r.json()['data']
+
+		transactions_dicts = [Transaction.from_dict(t) for t in data_dict['transactions'] if not t['cleared'] in ('reconciled', 'uncleared')
+							  and t['deleted'] is False and len(t['subtransactions']) == 0]
+
+		if len(self.user.flag_splits) > 0:
+			transactions_dicts = [t for t in transactions_dicts if t['flag_color'] in [f.color for f in self.user.flag_splits]]
+
+		return transactions_dicts

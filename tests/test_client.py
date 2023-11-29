@@ -4,7 +4,7 @@ from unittest.mock import patch, MagicMock
 import pytest
 from requests import Response
 
-from ynabsplitbudget.client import BaseClient, TransactionClient
+from ynabsplitbudget.client import BaseClient, SyncClient
 from ynabsplitbudget.models.account import Account
 from ynabsplitbudget.models.exception import BudgetNotFound, AccountNotFound
 from ynabsplitbudget.models.transaction import RootTransaction
@@ -47,15 +47,15 @@ def test_fetch_account_passes(mock_response, mock_budget):
 
 
 @patch('ynabsplitbudget.client.requests.get')
-def test_fetch_share_transactions_parent(mock_response, mock_transaction_dict):
+def test_fetch_new(mock_response, mock_transaction_dict):
 	# Arrange
 	mock_resp_obj = MagicMock()
 	mock_resp_obj.json.return_value = {'data': {'transactions': [mock_transaction_dict],
 												'server_knowledge': 100}}
 	mock_response.return_value = mock_resp_obj
 	# Act
-	c = TransactionClient(MagicMock(account=MagicMock(account_id='sample_account')))
-	r = c.fetch_changed()
+	c = SyncClient(MagicMock(account=MagicMock(account_id='sample_account')))
+	r = c.fetch_new()
 
 	# Assert
 	t = r[0]
@@ -70,15 +70,15 @@ def test_fetch_share_transactions_parent(mock_response, mock_transaction_dict):
 
 
 @patch('ynabsplitbudget.client.requests.get')
-def test_fetch_share_transactions_empty(mock_response, mock_transaction_dict):
+def test_fetch_new_empty(mock_response, mock_transaction_dict):
 	# Arrange
 	mock_resp_obj = MagicMock()
 	mock_resp_obj.json.return_value = {'data': {'transactions': [],
 												'server_knowledge': 100}}
 	mock_response.return_value = mock_resp_obj
 	# Act
-	c = TransactionClient(MagicMock())
-	r = c.fetch_changed()
+	c = SyncClient(MagicMock())
+	r = c.fetch_new()
 
 	# Assert
 	assert len(r) == 0
