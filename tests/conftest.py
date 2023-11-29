@@ -6,12 +6,17 @@ def mock_transaction_dict():
 	return {'id': 'sample_id',
 			'memo': 'sample_memo',
 			'payee_name': 'sample_payee',
+			'payee_id': 'sample_payee_id',
+			'category_name': 'sample_category_name',
+			'category_id': 'sample_category_id',
 			'deleted': False,
 			'account_id': 'sample_account',
 			'amount': 10,
 			'date': '2023-10-01',
 			'cleared': 'cleared',
-			'import_id': None}
+			'import_id': None,
+			'flag_color': 'purple',
+			'subtransactions': []}
 
 
 @pytest.fixture

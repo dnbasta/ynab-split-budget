@@ -4,14 +4,19 @@ from unittest.mock import patch, MagicMock
 import pytest
 from requests import Response
 
-from ynabsplitbudget.client import BaseClient, SyncClient
+from ynabsplitbudget.client import BaseClient, SyncClient, SplitClient
 from ynabsplitbudget.models.account import Account
+from ynabsplitbudget.models.categorysplit import CategorySplit
 from ynabsplitbudget.models.exception import BudgetNotFound, AccountNotFound
+from ynabsplitbudget.models.flagsplit import FlagSplit
+from ynabsplitbudget.models.splittransaction import SplitTransaction
 from ynabsplitbudget.models.transaction import RootTransaction
+from ynabsplitbudget.models.user import User
+from ynabsplitbudget.ynabsplitbudget import YnabSplitBudget
 
 
 @pytest.mark.parametrize('budget, account, expected', [('bullshit', 'bullshit', BudgetNotFound),
-											 ('sample_budget_name', 'bullshit', AccountNotFound)])
+													   ('sample_budget_name', 'bullshit', AccountNotFound)])
 @patch('ynabsplitbudget.client.requests.get')
 def test_fetch_account_fails(mock_response, mock_budget, budget, account, expected):
 	# Arrange
@@ -22,7 +27,7 @@ def test_fetch_account_fails(mock_response, mock_budget, budget, account, expect
 	# Act
 	with pytest.raises(expected):
 		BaseClient().fetch_account(budget_name=budget, account_name=account, user_name='sample_user',
-									   token='sample_token')
+								   token='sample_token')
 
 
 @patch('ynabsplitbudget.client.requests.get')
@@ -34,7 +39,7 @@ def test_fetch_account_passes(mock_response, mock_budget):
 
 	# Act
 	a = BaseClient().fetch_account(budget_name='sample_budget_name',
-								 account_name='sample_account_name', user_name='sample_user', token='sample_token')
+								   account_name='sample_account_name', user_name='sample_user', token='sample_token')
 
 	# Assert
 	assert isinstance(a, Account)
@@ -82,3 +87,44 @@ def test_fetch_new_empty(mock_response, mock_transaction_dict):
 
 	# Assert
 	assert len(r) == 0
+
+
+@patch('ynabsplitbudget.client.requests.get')
+def test_fetch_new_to_split_flag(mock_response, mock_transaction_dict):
+	# Arrange
+	mock_resp_obj = MagicMock(spec=Response)
+	mock_resp_obj.json.return_value = {'data': {'transactions': [mock_transaction_dict]}}
+	mock_response.return_value = mock_resp_obj
+
+	u = User(name='user_name', flag_splits=[FlagSplit(color='purple', split=0.5)],
+			 category_splits=[CategorySplit(name='sample_category_name', split=0.4)],
+			 token='sample_token',
+			 account=MagicMock())
+	c = SplitClient(u)
+	st = c.fetch_new_to_split()
+	assert isinstance(st[0], SplitTransaction)
+	assert st[0].split == 0.5
+
+
+@patch('ynabsplitbudget.client.requests.get')
+def test_fetch_new_to_split_category(mock_response, mock_transaction_dict):
+	# Arrange
+	mock_resp_obj = MagicMock(spec=Response)
+	mock_resp_obj.json.return_value = {'data': {'transactions': [mock_transaction_dict]}}
+	mock_response.return_value = mock_resp_obj
+
+	u = User(name='user_name', flag_splits=[FlagSplit(color='red', split=0.5)],
+			 category_splits=[CategorySplit(name='sample_category_name', split=0.4)],
+			 token='sample_token',
+			 account=MagicMock())
+	c = SplitClient(u)
+	st = c.fetch_new_to_split()
+	assert isinstance(st[0], SplitTransaction)
+	assert st[0].split == 0.4
+
+
+def test_insert_split():
+	ysb = YnabSplitBudget('../config.yaml')
+	c = SplitClient(user=ysb._config.user_1)
+	st = c.fetch_new_to_split()
+	c.insert_split(st[0])
