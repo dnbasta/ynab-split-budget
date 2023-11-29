@@ -121,10 +121,3 @@ def test_fetch_new_to_split_category(mock_response, mock_transaction_dict):
 	st = c.fetch_new_to_split()
 	assert isinstance(st[0], SplitTransaction)
 	assert st[0].split == 0.4
-
-
-def test_insert_split():
-	ysb = YnabSplitBudget('../config.yaml')
-	c = SplitClient(user=ysb._config.user_1)
-	st = c.fetch_new_to_split()
-	c.insert_split(st[0])
