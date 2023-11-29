@@ -4,11 +4,11 @@ from typing import List
 
 import requests
 
-from ynabsplitaccount.transactionbuilder import TransactionBuilder
-from ynabsplitaccount.models.exception import BudgetNotFound, AccountNotFound
-from ynabsplitaccount.models.account import Account
-from ynabsplitaccount.models.transaction import Transaction, RootTransaction
-from ynabsplitaccount.models.user import User
+from ynabsplitbudget.transactionbuilder import TransactionBuilder
+from ynabsplitbudget.models.exception import BudgetNotFound, AccountNotFound
+from ynabsplitbudget.models.account import Account
+from ynabsplitbudget.models.transaction import Transaction, RootTransaction
+from ynabsplitbudget.models.user import User
 
 YNAB_BASE_URL = 'https://api.ynab.com/v1/'
 

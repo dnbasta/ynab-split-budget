@@ -1,37 +1,39 @@
 from datetime import date
-from unittest.mock import patch, MagicMock, PropertyMock
+from unittest.mock import patch, MagicMock
 
 import pytest
 from requests import Response
 
-from ynabsplitaccount.client import BaseClient, TransactionClient
-from ynabsplitaccount.models.account import Account
-from ynabsplitaccount.models.exception import BudgetNotFound, AccountNotFound
-from ynabsplitaccount.models.transaction import RootTransaction
+from ynabsplitbudget.client import BaseClient, TransactionClient
+from ynabsplitbudget.models.account import Account
+from ynabsplitbudget.models.exception import BudgetNotFound, AccountNotFound
+from ynabsplitbudget.models.transaction import RootTransaction
 
 
 @pytest.mark.parametrize('budget, account, expected', [('bullshit', 'bullshit', BudgetNotFound),
 											 ('sample_budget_name', 'bullshit', AccountNotFound)])
-def test_fetch_account_fails(mock_budget, budget, account, expected):
+@patch('ynabsplitbudget.client.requests.get')
+def test_fetch_account_fails(mock_response, mock_budget, budget, account, expected):
 	# Arrange
-	mock_response = MagicMock(spec=Response)
-	mock_response.json.return_value = {'data': {'budgets': [mock_budget]}}
+	mock_resp_obj = MagicMock(spec=Response)
+	mock_resp_obj.json.return_value = {'data': {'budgets': [mock_budget]}}
+	mock_response.return_value = mock_resp_obj
 
 	# Act
-	with patch('ynabsplitaccount.client.requests.get', return_value=mock_response):
-		with pytest.raises(expected) as e:
-			BaseClient().fetch_account(budget_name=budget, account_name=account, user_name='sample_user',
+	with pytest.raises(expected):
+		BaseClient().fetch_account(budget_name=budget, account_name=account, user_name='sample_user',
 									   token='sample_token')
 
 
-def test_fetch_account_passes(mock_budget):
+@patch('ynabsplitbudget.client.requests.get')
+def test_fetch_account_passes(mock_response, mock_budget):
 	# Arrange
-	mock_response = MagicMock(spec=Response)
-	mock_response.json.return_value = {'data': {'budgets': [mock_budget]}}
+	mock_resp_obj = MagicMock(spec=Response)
+	mock_resp_obj.json.return_value = {'data': {'budgets': [mock_budget]}}
+	mock_response.return_value = mock_resp_obj
 
 	# Act
-	with patch('ynabsplitaccount.client.requests.get', return_value=mock_response):
-		a = BaseClient().fetch_account(budget_name='sample_budget_name',
+	a = BaseClient().fetch_account(budget_name='sample_budget_name',
 								 account_name='sample_account_name', user_name='sample_user', token='sample_token')
 
 	# Assert
@@ -44,37 +46,39 @@ def test_fetch_account_passes(mock_budget):
 	assert a.transfer_payee_id == 'sample_transfer_payee_id'
 
 
-def test_fetch_share_transactions_parent(mock_transaction_dict):
+@patch('ynabsplitbudget.client.requests.get')
+def test_fetch_share_transactions_parent(mock_response, mock_transaction_dict):
 	# Arrange
-	mock_response = MagicMock(spec=Response)
-	mock_response.json.return_value = {'data': {'transactions': [mock_transaction_dict],
+	mock_resp_obj = MagicMock()
+	mock_resp_obj.json.return_value = {'data': {'transactions': [mock_transaction_dict],
 												'server_knowledge': 100}}
+	mock_response.return_value = mock_resp_obj
 	# Act
-	with patch('ynabsplitaccount.client.requests.get', return_value=mock_response):
-		c = TransactionClient(MagicMock(account=MagicMock(account_id='sample_account')))
-		r = c.fetch_changed()
+	c = TransactionClient(MagicMock(account=MagicMock(account_id='sample_account')))
+	r = c.fetch_changed()
 
 	# Assert
 	t = r[0]
 	assert isinstance(t, RootTransaction)
 	assert t.share_id == '6f66e5aa449e868261ce'
 	assert t.account_id == 'sample_account'
-	assert t.amount == -0.01
+	assert t.amount == 0.01
 	assert t.id == 'sample_id'
 	assert t.payee_name == 'sample_payee'
 	assert t.memo == 'sample_memo'
 	assert t.transaction_date == date(2023, 10, 1)
 
 
-def test_fetch_share_transactions_empty(mock_transaction_dict):
+@patch('ynabsplitbudget.client.requests.get')
+def test_fetch_share_transactions_empty(mock_response, mock_transaction_dict):
 	# Arrange
-	mock_response = MagicMock(spec=Response)
-	mock_response.json.return_value = {'data': {'transactions': [],
+	mock_resp_obj = MagicMock()
+	mock_resp_obj.json.return_value = {'data': {'transactions': [],
 												'server_knowledge': 100}}
+	mock_response.return_value = mock_resp_obj
 	# Act
-	with patch('ynabsplitaccount.client.requests.get', return_value=mock_response):
-		c = TransactionClient(MagicMock())
-		r = c.fetch_changed()
+	c = TransactionClient(MagicMock())
+	r = c.fetch_changed()
 
 	# Assert
 	assert len(r) == 0

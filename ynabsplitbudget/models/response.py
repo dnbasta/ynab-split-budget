@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List
 
-from ynabsplitaccount.models.transaction import RootTransaction
+from ynabsplitbudget.models.transaction import RootTransaction
 
 
 @dataclass

@@ -38,7 +38,7 @@ reconciled in order to be recognized by the library.
 #### as python library
 
 ```py
-from ynabsplitaccount import YnabSplitAccount
+from ynabsplitbudget import YnabSplitAccount
 
 # initialize
 ynab_split_account = YnabSplitAccount(path='path/config.yaml')

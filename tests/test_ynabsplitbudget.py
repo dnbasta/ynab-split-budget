@@ -2,11 +2,11 @@ import json
 from io import StringIO
 from unittest.mock import patch, MagicMock
 
-from ynabsplitaccount.ynabsplitaccount import YnabSplitAccount
+from ynabsplitbudget.ynabsplitbudget import YnabSplitBudget
 
 
-@patch('ynabsplitaccount.ynabsplitaccount.BaseClient.fetch_account')
-@patch('ynabsplitaccount.ynabsplitaccount.Path.open')
+@patch('ynabsplitbudget.ynabsplitbudget.BaseClient.fetch_account')
+@patch('ynabsplitbudget.ynabsplitbudget.Path.open')
 def test_ynab_share_account(mock_config, mock_account):
 	mock_config_dict = {'user_1': {
 						'name': 'name1',
@@ -23,7 +23,7 @@ def test_ynab_share_account(mock_config, mock_account):
 	mock_account.return_value = MagicMock()
 
 	# Act
-	ysa = YnabSplitAccount(path='/test/path/config.yaml')
+	ysa = YnabSplitBudget(path='/test/path/config.yaml')
 
 	# Assert
 	assert ysa._config.user_1.name == 'name1'

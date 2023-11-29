@@ -2,14 +2,14 @@ from pathlib import Path
 
 import yaml
 
-from ynabsplitaccount.client import BaseClient, TransactionClient
-from ynabsplitaccount.models.config import Config
-from ynabsplitaccount.models.response import Response, ResponseItem
-from ynabsplitaccount.models.user import User
-from ynabsplitaccount.transactionrepository import TransactionRepository
+from ynabsplitbudget.client import BaseClient, TransactionClient
+from ynabsplitbudget.models.config import Config
+from ynabsplitbudget.models.response import Response, ResponseItem
+from ynabsplitbudget.models.user import User
+from ynabsplitbudget.transactionrepository import TransactionRepository
 
 
-class YnabSplitAccount:
+class YnabSplitBudget:
 	def __init__(self, path: str):
 		with Path(path).open(mode='r') as f:
 			config_dict = yaml.safe_load(f)

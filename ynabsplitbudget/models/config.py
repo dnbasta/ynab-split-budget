@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from ynabsplitaccount.models.user import User
+from ynabsplitbudget.models.user import User
 
 
 @dataclass(eq=True, frozen=True)

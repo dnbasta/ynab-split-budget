@@ -3,13 +3,13 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry-core.masonry.api"
 
 [tool.poetry]
-name = "ynab-split-account"
+name = "ynab-split-budget"
 version = "0.0.0"
 authors = ["Daniel Basta <ynab@basta.info>"]
-description = "Library to balance You Need A Budget (YNAB) account with counterpart in different budget"
+description = "Library to split and share You Need A Budget (YNAB) transactions between two budgets"
 readme = "README.md"
 license = 'MIT'
-packages = [{include = 'ynabsplitaccount'}]
+packages = [{include = 'ynabsplitbudget'}]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -22,5 +22,5 @@ pyyaml = '>=6.0'
 requests = '>=2.31'
 
 [poetry.urls]
-"Homepage" = "https://github.com/dnbasta/ynab-split-account"
-"Bug Tracker" = "https://github.com/dnbasta/ynab-split-account/issues"
+"Homepage" = "https://github.com/dnbasta/ynab-split-budget"
+"Bug Tracker" = "https://github.com/dnbasta/ynab-split-budget/issues"

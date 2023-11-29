@@ -3,8 +3,8 @@ import re
 from dataclasses import dataclass
 from typing import Union
 
-from ynabsplitaccount.models.transaction import RootTransaction, ComplementTransaction, LookupTransaction
-from ynabsplitaccount.models.user import User
+from ynabsplitbudget.models.transaction import RootTransaction, ComplementTransaction, LookupTransaction
+from ynabsplitbudget.models.user import User
 
 
 @dataclass

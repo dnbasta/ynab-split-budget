@@ -4,7 +4,7 @@ import sys
 import warnings
 from dataclasses import asdict
 
-from ynabsplitaccount.ynabsplitaccount import YnabSplitAccount
+from ynabsplitbudget.ynabsplitaccount import YnabSplitBudget
 
 
 def custom_warn(message, category, filename, lineno, file=None, line=None):
@@ -25,7 +25,7 @@ if __name__ == '__main__':
 	args = parser.parse_args()
 
 	warnings.showwarning = custom_warn
-	ysa = YnabSplitAccount(path=args.config_path)
+	ysa = YnabSplitBudget(path=args.config_path)
 
 	if args.fetch_insert:
 		r = ysa.fetch_new()

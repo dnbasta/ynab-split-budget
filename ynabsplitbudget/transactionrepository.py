@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
 from typing import List, Optional
 
-from ynabsplitaccount.client import TransactionClient
-from ynabsplitaccount.models.config import Config
-from ynabsplitaccount.models.transaction import Transaction, RootTransaction, ComplementTransaction, LookupTransaction
+from ynabsplitbudget.client import TransactionClient
+from ynabsplitbudget.models.config import Config
+from ynabsplitbudget.models.transaction import Transaction, RootTransaction, ComplementTransaction, LookupTransaction
 
 
 @dataclass
