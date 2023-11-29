@@ -1,5 +1,5 @@
 from datetime import date
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, PropertyMock
 
 import pytest
 from requests import Response
@@ -51,11 +51,11 @@ def test_fetch_share_transactions_parent(mock_transaction_dict):
 												'server_knowledge': 100}}
 	# Act
 	with patch('ynabsplitaccount.client.requests.get', return_value=mock_response):
-		c = TransactionClient(MagicMock())
+		c = TransactionClient(MagicMock(account=MagicMock(account_id='sample_account')))
 		r = c.fetch_changed()
 
 	# Assert
-	t = r[0][0]
+	t = r[0]
 	assert isinstance(t, RootTransaction)
 	assert t.share_id == '6f66e5aa449e868261ce'
 	assert t.account_id == 'sample_account'
@@ -77,4 +77,4 @@ def test_fetch_share_transactions_empty(mock_transaction_dict):
 		r = c.fetch_changed()
 
 	# Assert
-	assert len(r[0]) == 0
+	assert len(r) == 0

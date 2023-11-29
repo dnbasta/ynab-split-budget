@@ -51,7 +51,7 @@ class BaseClient(ClientMixin):
 class TransactionClient(BaseClient):
 	user: User
 
-	def fetch_changed(self) -> List[Transaction]:
+	def fetch_changed(self) -> List[RootTransaction]:
 		url = (f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/accounts/'
 			   f'{self.user.account.account_id}/transactions')
 
@@ -63,18 +63,23 @@ class TransactionClient(BaseClient):
 							  and t['deleted'] is False
 							  and (t['import_id'] is None or 's||' not in t['import_id'])]
 
-		return self._build_transactions(transactions_dicts)
+		stb = TransactionBuilder(self.user)
+		transactions = [stb.build_root_transaction(t_dict=t) for t in transactions_dicts]
+
+		return transactions
 
 	def fetch_lookup(self, since: date) -> List[Transaction]:
 		params = {'since_date': datetime.strftime(since, '%Y-%m-%d')}
-		url = (f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/accounts/'
-			   f'{self.user.account.account_id}/transactions')
+		url = f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/transactions'
 
 		r = requests.get(url, params=params, headers=self._header(self.user.token))
 		r.raise_for_status()
 		data_dict = r.json()['data']
 
-		return self._build_transactions(data_dict['transactions'])
+		stb = TransactionBuilder(self.user)
+		transactions = [stb.build(t_dict=t) for t in data_dict['transactions']]
+
+		return transactions
 
 	def insert_child(self, t: RootTransaction):
 
@@ -91,9 +96,3 @@ class TransactionClient(BaseClient):
 		r = requests.post(f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/transactions', json=data,
 						  headers=self._header(self.user.token))
 		r.raise_for_status()
-
-	@staticmethod
-	def _build_transactions(t_dicts: List[dict]) -> List[Transaction]:
-		stb = TransactionBuilder()
-		transactions = [stb.build(t_dict=t) for t in t_dicts]
-		return transactions

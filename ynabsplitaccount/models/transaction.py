@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 from datetime import date, datetime
+from typing import List
 
 
-@dataclass(eq=True, frozen=True)
+@dataclass
 class Transaction:
 	id: str
 	share_id: str
@@ -18,16 +19,31 @@ class Transaction:
 				   transaction_date=datetime.strptime(t_dict['date'], '%Y-%m-%d').date(),
 				   memo=t_dict['memo'],
 				   payee_name=t_dict['payee_name'],
-				   amount=-round(float(t_dict['amount']) / 1000, 2),
+				   amount=round(float(t_dict['amount']) / 1000, 2),
 				   account_id=t_dict['account_id'],
 				   share_id=share_id)
 
 
-@dataclass(eq=True, frozen=True)
+@dataclass
 class RootTransaction(Transaction):
 	pass
 
 
-@dataclass(eq=True, frozen=True)
+@dataclass
 class ComplementTransaction(Transaction):
 	pass
+
+
+@dataclass
+class LookupTransaction:
+	account_id: str
+	payee_name: str
+	transfer_transaction_ids: List[str]
+
+	@classmethod
+	def from_dict(cls, t_dict: dict):
+		tt_ids = [st['transfer_transaction_id'] for st in t_dict['subtransactions']
+				  if st['transfer_transaction_id'] is not None]
+		return cls(payee_name=t_dict['payee_name'],
+				   transfer_transaction_ids=tt_ids,
+				   account_id=t_dict['account_id'])

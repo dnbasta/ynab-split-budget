@@ -25,13 +25,13 @@ class YnabSplitAccount:
 		return User(name=user_dict['name'], token=user_dict['token'], account=account)
 
 	def fetch_new(self) -> Response:
-		st_repo = TransactionRepository.from_config(self._config)
-		print(f'fetched new: {self._config.user_1.name}: {len(st_repo.fetch_new_user_1())} '
-			  f'{self._config.user_2.name}: {len(st_repo.fetch_new_user_2())}')
+		st_repo = TransactionRepository(self._config).populate()
+		print(f'fetched new: {self._config.user_1.name}: {len(st_repo.user_1)} '
+			  f'{self._config.user_2.name}: {len(st_repo.user_2)}')
 		return Response(user_1=ResponseItem(name=self._config.user_1.name,
-												   transactions=st_repo.fetch_new_user_1()),
+												   transactions=st_repo.user_1),
 						user_2=ResponseItem(name=self._config.user_2.name,
-												   transactions=st_repo.fetch_new_user_2()))
+												   transactions=st_repo.user_2))
 
 	def insert_complement(self, response: Response):
 		u1c = TransactionClient(user=self._config.user_1)
