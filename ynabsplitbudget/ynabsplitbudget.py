@@ -41,7 +41,7 @@ class YnabSplitBudget:
 	def _fetch_user(self, user_name: str):
 		return next(u for u in (self._config.user_1, self._config.user_2) if u.name == user_name)
 
-	def insert_complements(self, user_name: str):
+	def insert_complements(self, user_name: str) -> int:
 		user = self._fetch_user(user_name)
 		partner = self._config.user_1 if user == self._config.user_2 else self._config.user_2
 		st_repo = TransactionRepository(user=user, partner=partner).populate()
@@ -49,9 +49,11 @@ class YnabSplitBudget:
 
 		[c.insert_complement(t) for t in st_repo.transactions]
 		print(f'inserted {len(st_repo.transactions)} complements into account from {partner.name}')
+		return len(st_repo.transactions)
 
-	def split_transactions(self, user_name: str):
+	def split_transactions(self, user_name: str) -> int:
 		c = SplitClient(self._fetch_user(user_name))
 		st_list = c.fetch_new_to_split()
 		[c.insert_split(st) for st in st_list]
 		print(f'split {len(st_list)} transactions for {user_name}')
+		return len(st_list)
