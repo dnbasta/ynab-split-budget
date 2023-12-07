@@ -33,4 +33,4 @@ jobs:
         poetry version $(git describe --tags --abbrev=0)
         poetry build
     - name: Publish
-      run: poetry publish -r
+      run: poetry publish
