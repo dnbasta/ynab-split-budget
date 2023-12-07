@@ -13,11 +13,11 @@ class SplitTransaction:
 	payee_id: str
 	category: Category
 	amount: float
-	split: float
+	split_amount: float
 	account_id: str
 
 	@classmethod
-	def from_dict(cls, t_dict: dict, split: float):
+	def from_dict(cls, t_dict: dict, split_amount: float):
 		return cls(id=t_dict['id'],
 				   transaction_date=datetime.strptime(t_dict['date'], '%Y-%m-%d').date(),
 				   payee_name=t_dict['payee_name'],
@@ -25,5 +25,5 @@ class SplitTransaction:
 				   amount=round(float(t_dict['amount']) / 1000, 2),
 				   payee_id=t_dict['payee_id'],
 				   category=Category(name=t_dict['category_name'], id=t_dict['category_id']),
-				   split=split,
+				   split_amount=split_amount,
 				   account_id=t_dict['account_id'])

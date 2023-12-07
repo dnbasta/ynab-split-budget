@@ -34,15 +34,17 @@ def mock_budget():
 @pytest.fixture
 def mock_config_dict():
 	return {'user_1': {
-			'name': 'name1',
-			'token': 'token1',
-			'account': 'account1',
-			'budget': 'budget1',
-			'flags': [{'color': 'purple', 'split': 0.5}],
-			'categories': [{'name': 'sample_category', 'split': 0.5}]},
+				'name': 'name1',
+				'token': 'token1',
+				'account': 'account1',
+				'budget': 'budget1',
+				'flag': 'purple',
+			},
 			'user_2': {
 				'name': 'name2',
 				'token': 'token2',
 				'account': 'account2',
-				'budget': 'budget2'}
+				'budget': 'budget2',
+				'flag': 'red'
+			}
 		}

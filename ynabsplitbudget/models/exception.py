@@ -6,3 +6,7 @@ class BudgetNotFound(Exception):
 
 class AccountNotFound(Exception):
 	pass
+
+
+class SplitNotValid(Exception):
+	pass

@@ -1,13 +1,13 @@
 import re
 from dataclasses import dataclass
 from datetime import date, datetime
-from typing import List
+from typing import List, Optional
 
 import requests
 
 from ynabsplitbudget.models.splittransaction import SplitTransaction
 from ynabsplitbudget.transactionbuilder import TransactionBuilder
-from ynabsplitbudget.models.exception import BudgetNotFound, AccountNotFound
+from ynabsplitbudget.models.exception import BudgetNotFound, AccountNotFound, SplitNotValid
 from ynabsplitbudget.models.account import Account
 from ynabsplitbudget.models.transaction import Transaction, RootTransaction
 from ynabsplitbudget.models.user import User
@@ -114,22 +114,19 @@ class SplitClient(BaseClient):
 		transactions_dicts = [t for t in data_dict['transactions'] if not t['cleared'] in ('reconciled', 'uncleared')
 							  and t['deleted'] is False and len(t['subtransactions']) == 0]
 
-		flag_splits = self._filter_none([self._create_for_flag(t) for t in transactions_dicts
-										 if t['flag_color'] is not None])
-		category_splits = self._filter_none([self._create_for_category(t) for t in transactions_dicts
-						   if t['id'] not in [tf.id for tf in flag_splits]])
+		flag_splits = self._filter_none([self._build_transaction(t) for t in transactions_dicts
+										 if t['flag_color'] == self.user.flag])
 
-		return flag_splits + category_splits
+		return flag_splits
 
 	def insert_split(self, t: SplitTransaction):
-		amount = int(t.amount * 1000)
 		data = {'transaction': {
-			"subtransactions": [{"amount": int(amount / 2),
+			"subtransactions": [{"amount": int(t.split_amount * 1000),
 								 "payee_id": self.user.account.transfer_payee_id,
 								 "memo": t.memo,
 								 "cleared": "cleared"
 								},
-								{"amount": int(amount / 2),
+								{"amount": int((t.amount - t.split_amount) * 1000),
 								 "category_id": t.category.id,
 								 "cleared": "cleared"
 								 }]
@@ -139,40 +136,40 @@ class SplitClient(BaseClient):
 		r = requests.put(url, json=data, headers=self._header(self.user.token))
 		r.raise_for_status()
 
-	def _create_for_flag(self, t_dict: dict) -> SplitTransaction:
-		for f in self.user.flag_splits:
-			if f.color == t_dict['flag_color']:
-				return SplitTransaction.from_dict(t_dict=t_dict, split=f.split)
-
-	def _create_for_category(self, t_dict: dict) -> SplitTransaction:
-		for f in self.user.category_splits:
-			if f.name == self._remove_emojis(t_dict['category_name']):
-				return SplitTransaction.from_dict(t_dict=t_dict, split=f.split)
-
-	@staticmethod
-	def _remove_emojis(text: str) -> str:
-		emoji = re.compile("["
-						  u"\U0001F600-\U0001F64F"  # emoticons
-						  u"\U0001F300-\U0001F5FF"  # symbols & pictographs
-						  u"\U0001F680-\U0001F6FF"  # transport & map symbols
-						  u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
-						  u"\U00002500-\U00002BEF"  # chinese char
-						  u"\U00002702-\U000027B0"
-						  u"\U00002702-\U000027B0"
-						  u"\U000024C2-\U0001F251"
-						  u"\U0001f926-\U0001f937"
-						  u"\U00010000-\U0010ffff"
-						  u"\u2640-\u2642"
-						  u"\u2600-\u2B55"
-						  u"\u200d"
-						  u"\u23cf"
-						  u"\u23e9"
-						  u"\u231a"
-						  u"\ufe0f"  # dingbats
-						  u"\u3030"
-						  "]+", re.UNICODE)
-		return re.sub(emoji, '', text).lstrip().rstrip()
-
 	@staticmethod
 	def _filter_none(li: list) -> list:
 		return [i for i in li if i is not None]
+
+	def _build_transaction(self, t_dict: dict) -> Optional[SplitTransaction]:
+		try:
+			split_amount = self._parse_split(t_dict)
+			return SplitTransaction.from_dict(t_dict=t_dict, split_amount=split_amount)
+		except SplitNotValid as e:
+			print(e)
+			return None
+
+	@staticmethod
+	def _parse_split(t_dict: dict) -> Optional[float]:
+		amount = round(t_dict['amount'] / 1000, 2)
+		rep = f"[{t_dict['date']} | {t_dict['payee_name']} | {amount} | {t_dict['memo']}]"
+
+		try:
+			r = re.search(r'@(\d+\.?\d*)(%?)', t_dict['memo'])
+		except TypeError:
+			r = None
+
+		# return half the amount if no split attribution is found
+		if r is None:
+			return amount * 0.5
+
+		split_number = float(r.groups()[0])
+		if r.groups()[1] == '%':
+			if split_number <= 100:
+				return amount * split_number / 100
+			raise SplitNotValid(f"Split is above 100% for transaction {rep}")
+		if split_number > amount:
+			raise SplitNotValid(f"Split is above total amount of {amount} for transaction {rep}")
+		return split_number
+
+
+

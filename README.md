@@ -24,26 +24,20 @@ user_1:
   token: <ynab_token>
   budget: <ynab_budget_name>
   account: <ynab_budget_account_name>
-  flags:
-    - color: blue
-      split: 0.5
-    - color: purple
-      split: 0.33
+  flag: purple
 user_2:
   name: <user_name>
   token: <ynab_token>
   budget: <ynab_budget_name>
   account: <ynab_budget_account_name>
-  flags:
-    - color: orange
-      split: 0.5
-    - color: red
-      split: 0.25
+  flag: blue
 ```
 
 ## Usage
-1. Create a transaction somewhere in your budget and add one of the defined color flags. It needs to be cleared and not
-yet reconciled to be picked up by the library.
+1. Create a transaction somewhere in your budget and add the defined color flag. It needs to be cleared and not
+yet reconciled. By default, the transaction will be split in half, but you can specify a different split by adding
+`@x%` for percentage or `@x` for specific amount in the memo of the transaction. The amount you specify
+in this split will be transferred to your sharing account.
 2. Run the split functionality either as python library or from the command line.
 ```py
 from ynabsplitbudget import YnabSplitBudget

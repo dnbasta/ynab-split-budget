@@ -6,13 +6,10 @@ from requests import Response
 
 from ynabsplitbudget.client import BaseClient, SyncClient, SplitClient
 from ynabsplitbudget.models.account import Account
-from ynabsplitbudget.models.categorysplit import CategorySplit
-from ynabsplitbudget.models.exception import BudgetNotFound, AccountNotFound
-from ynabsplitbudget.models.flagsplit import FlagSplit
+from ynabsplitbudget.models.exception import BudgetNotFound, AccountNotFound, SplitNotValid
 from ynabsplitbudget.models.splittransaction import SplitTransaction
 from ynabsplitbudget.models.transaction import RootTransaction
 from ynabsplitbudget.models.user import User
-from ynabsplitbudget.ynabsplitbudget import YnabSplitBudget
 
 
 @pytest.mark.parametrize('budget, account, expected', [('bullshit', 'bullshit', BudgetNotFound),
@@ -96,28 +93,67 @@ def test_fetch_new_to_split_flag(mock_response, mock_transaction_dict):
 	mock_resp_obj.json.return_value = {'data': {'transactions': [mock_transaction_dict]}}
 	mock_response.return_value = mock_resp_obj
 
-	u = User(name='user_name', flag_splits=[FlagSplit(color='purple', split=0.5)],
-			 category_splits=[CategorySplit(name='sample_category_name', split=0.4)],
+	u = User(name='user_name', flag='purple',
 			 token='sample_token',
 			 account=MagicMock())
 	c = SplitClient(u)
+
+	# Act
 	st = c.fetch_new_to_split()
+
+	# Assert
 	assert isinstance(st[0], SplitTransaction)
-	assert st[0].split == 0.5
+	assert st[0].split_amount == 0.5
 
 
-@patch('ynabsplitbudget.client.requests.get')
-def test_fetch_new_to_split_category(mock_response, mock_transaction_dict):
+@pytest.mark.parametrize('test_input, expected', [('xxx', 1), ('xxx @25%:xxx', 0.5), ('@33%', 0.66), ('@0.7', 0.7),
+												  (None, 1)])
+def test__parse_split_pass(test_input, expected):
 	# Arrange
-	mock_resp_obj = MagicMock(spec=Response)
-	mock_resp_obj.json.return_value = {'data': {'transactions': [mock_transaction_dict]}}
-	mock_response.return_value = mock_resp_obj
+	c = SplitClient(user=MagicMock())
+	t_dict = {'date': '2023-12-01', 'payee_name': 'payee', 'amount': 2000, 'memo': test_input}
 
-	u = User(name='user_name', flag_splits=[FlagSplit(color='red', split=0.5)],
-			 category_splits=[CategorySplit(name='sample_category_name', split=0.4)],
-			 token='sample_token',
-			 account=MagicMock())
-	c = SplitClient(u)
-	st = c.fetch_new_to_split()
-	assert isinstance(st[0], SplitTransaction)
-	assert st[0].split == 0.4
+	# Act
+	split_amount = c._parse_split(t_dict)
+
+	# Assert
+	assert split_amount == expected
+
+
+@pytest.mark.parametrize('test_input', ['@110%', '@2'])
+def test__parse_split_fail(test_input):
+	# Arrange
+	c = SplitClient(user=MagicMock())
+	t_dict = {'date': '2023-12-01', 'payee_name': 'payee', 'amount': 1000, 'memo': test_input}
+
+	# Assert
+	with pytest.raises(SplitNotValid):
+		# Act
+		c._parse_split(t_dict)
+
+
+@patch('ynabsplitbudget.client.SplitTransaction.from_dict', return_value=MagicMock(spec=SplitTransaction))
+def test__build_transaction_success(mock):
+	# Arrange
+	c = SplitClient(user=MagicMock())
+	t_dict = {'date': '2023-12-01', 'payee_name': 'payee', 'amount': 1000, 'memo': 'xxx'}
+
+	# Act
+	st = c._build_transaction(t_dict=t_dict)
+
+	# Assert
+	mock.assert_called_once_with(t_dict=t_dict, split_amount=0.5)
+
+
+@patch('ynabsplitbudget.client.SplitTransaction.from_dict', return_value=MagicMock(spec=SplitTransaction))
+def test__build_transaction_fail(mock):
+	# Arrange
+	c = SplitClient(user=MagicMock())
+	t_dict = {'date': '2023-12-01', 'payee_name': 'payee', 'amount': 1000, 'memo': '@110%'}
+
+	# Act
+	st = c._build_transaction(t_dict=t_dict)
+
+	# Assert
+	assert not mock.called
+	assert st is None
