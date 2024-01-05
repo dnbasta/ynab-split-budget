@@ -88,7 +88,7 @@ class SyncClient(BaseClient):
 		data = {'transaction': {
 			"account_id": self.user.account.account_id,
 			"date": t.transaction_date.strftime("%Y-%m-%d"),
-			"amount": - int(t.amount * 1000),
+			"amount": - t.amount,
 			"payee_name": None if 'Transfer : ' in t.payee_name else t.payee_name,
 			"memo": t.memo,
 			"cleared": 'cleared',
@@ -121,12 +121,12 @@ class SplitClient(BaseClient):
 
 	def insert_split(self, t: SplitTransaction):
 		data = {'transaction': {
-			"subtransactions": [{"amount": int(t.split_amount * 1000),
+			"subtransactions": [{"amount": t.split_amount,
 								 "payee_id": self.user.account.transfer_payee_id,
 								 "memo": t.memo,
 								 "cleared": "cleared"
 								},
-								{"amount": int((t.amount - t.split_amount) * 1000),
+								{"amount": t.amount - t.split_amount,
 								 "category_id": t.category.id,
 								 "cleared": "cleared"
 								 }]

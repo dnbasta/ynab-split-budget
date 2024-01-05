@@ -64,7 +64,7 @@ def test_fetch_new(mock_response, mock_transaction_dict):
 	assert isinstance(t, RootTransaction)
 	assert t.share_id == '6f66e5aa449e868261ce'
 	assert t.account_id == 'sample_account'
-	assert t.amount == 1
+	assert t.amount == 1000
 	assert t.id == 'sample_id'
 	assert t.payee_name == 'sample_payee'
 	assert t.memo == 'sample_memo'

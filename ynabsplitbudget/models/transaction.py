@@ -19,7 +19,7 @@ class Transaction:
 				   transaction_date=datetime.strptime(t_dict['date'], '%Y-%m-%d').date(),
 				   memo=t_dict['memo'],
 				   payee_name=t_dict['payee_name'],
-				   amount=round(float(t_dict['amount']) / 1000, 2),
+				   amount=t_dict['amount'],
 				   account_id=t_dict['account_id'],
 				   share_id=share_id)
 
