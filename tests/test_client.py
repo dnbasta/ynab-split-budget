@@ -106,12 +106,12 @@ def test_fetch_new_to_split_flag(mock_response, mock_transaction_dict):
 	assert st[0].split_amount == 0.5
 
 
-@pytest.mark.parametrize('test_input, expected', [('xxx', 1), ('xxx @25%:xxx', 0.5), ('@33%', 0.66), ('@0.7', 0.7),
-												  (None, 1)])
+@pytest.mark.parametrize('test_input, expected', [('xxx', -1000), ('xxx @25%:xxx', -500), ('@33%', -660), ('@0.7', -700),
+												  (None, -1000)])
 def test__parse_split_pass(test_input, expected):
 	# Arrange
 	c = SplitClient(user=MagicMock())
-	t_dict = {'date': '2023-12-01', 'payee_name': 'payee', 'amount': 2000, 'memo': test_input}
+	t_dict = {'date': '2023-12-01', 'payee_name': 'payee', 'amount': -2000, 'memo': test_input}
 
 	# Act
 	split_amount = c._parse_split(t_dict)
@@ -124,7 +124,7 @@ def test__parse_split_pass(test_input, expected):
 def test__parse_split_fail(test_input):
 	# Arrange
 	c = SplitClient(user=MagicMock())
-	t_dict = {'date': '2023-12-01', 'payee_name': 'payee', 'amount': 1000, 'memo': test_input}
+	t_dict = {'date': '2023-12-01', 'payee_name': 'payee', 'amount': -1000, 'memo': test_input}
 
 	# Assert
 	with pytest.raises(SplitNotValid):

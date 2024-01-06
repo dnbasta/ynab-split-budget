@@ -121,12 +121,12 @@ class SplitClient(BaseClient):
 
 	def insert_split(self, t: SplitTransaction):
 		data = {'transaction': {
-			"subtransactions": [{"amount": t.split_amount,
+			"subtransactions": [{"amount": int(t.split_amount),
 								 "payee_id": self.user.account.transfer_payee_id,
 								 "memo": t.memo,
 								 "cleared": "cleared"
 								},
-								{"amount": t.amount - t.split_amount,
+								{"amount": int(t.amount - t.split_amount),
 								 "category_id": t.category.id,
 								 "cleared": "cleared"
 								 }]
@@ -150,7 +150,7 @@ class SplitClient(BaseClient):
 
 	@staticmethod
 	def _parse_split(t_dict: dict) -> Optional[float]:
-		amount = round(t_dict['amount'] / 1000, 2)
+		amount = t_dict['amount']
 		rep = f"[{t_dict['date']} | {t_dict['payee_name']} | {amount} | {t_dict['memo']}]"
 
 		try:
@@ -167,9 +167,9 @@ class SplitClient(BaseClient):
 			if split_number <= 100:
 				return amount * split_number / 100
 			raise SplitNotValid(f"Split is above 100% for transaction {rep}")
-		if split_number > amount:
-			raise SplitNotValid(f"Split is above total amount of {amount} for transaction {rep}")
-		return split_number
-
+		if split_number * 1000 > abs(amount):
+			raise SplitNotValid(f"Split is above total amount of {amount / 1000:.2f} for transaction {rep}")
+		sign = -1 if amount < 0 else 1
+		return sign * split_number * 1000
 
 
