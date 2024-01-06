@@ -103,7 +103,7 @@ def test_fetch_new_to_split_flag(mock_response, mock_transaction_dict):
 
 	# Assert
 	assert isinstance(st[0], SplitTransaction)
-	assert st[0].split_amount == 0.5
+	assert st[0].split_amount == 500
 
 
 @pytest.mark.parametrize('test_input, expected', [('xxx', -1000), ('xxx @25%:xxx', -500), ('@33%', -660), ('@0.7', -700),
@@ -142,7 +142,7 @@ def test__build_transaction_success(mock):
 	st = c._build_transaction(t_dict=t_dict)
 
 	# Assert
-	mock.assert_called_once_with(t_dict=t_dict, split_amount=0.5)
+	mock.assert_called_once_with(t_dict=t_dict, split_amount=500)
 
 
 @patch('ynabsplitbudget.client.SplitTransaction.from_dict', return_value=MagicMock(spec=SplitTransaction))
