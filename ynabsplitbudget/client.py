@@ -151,7 +151,7 @@ class SplitClient(BaseClient):
 	@staticmethod
 	def _parse_split(t_dict: dict) -> Optional[float]:
 		amount = t_dict['amount']
-		rep = f"[{t_dict['date']} | {t_dict['payee_name']} | {amount} | {t_dict['memo']}]"
+		rep = f"[{t_dict['date']} | {t_dict['payee_name']} | {amount/1000:.2f} | {t_dict['memo']}]"
 
 		try:
 			r = re.search(r'@(\d+\.?\d*)(%?)', t_dict['memo'])
