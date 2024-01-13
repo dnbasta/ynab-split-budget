@@ -2,10 +2,10 @@ from pathlib import Path
 
 import yaml
 
-from ynabsplitbudget.client import BaseClient, SyncClient, SplitClient
+from ynabsplitbudget.client import BaseClient, SplitClient
 from ynabsplitbudget.models.config import Config
 from ynabsplitbudget.models.user import User
-from ynabsplitbudget.transactionrepository import TransactionRepository
+from ynabsplitbudget.syncrepository import SyncRepository
 
 
 class YnabSplitBudget:
@@ -30,12 +30,12 @@ class YnabSplitBudget:
 	def insert_complements(self, user_name: str) -> int:
 		user = self._fetch_user(user_name)
 		partner = self._config.user_1 if user == self._config.user_2 else self._config.user_2
-		st_repo = TransactionRepository(user=user, partner=partner).populate()
-		c = SyncClient(partner)
+		repo = SyncRepository(user=user, partner=partner)
+		transactions = repo.fetch_new()
 
-		[c.insert_complement(t) for t in st_repo.transactions]
-		print(f'inserted {len(st_repo.transactions)} complements into account from {partner.name}')
-		return len(st_repo.transactions)
+		repo.insert_complements(transactions)
+		print(f'inserted {len(transactions)} complements into account from {partner.name}')
+		return len(transactions)
 
 	def split_transactions(self, user_name: str) -> int:
 		c = SplitClient(self._fetch_user(user_name))

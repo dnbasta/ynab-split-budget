@@ -89,7 +89,7 @@ class SyncClient(BaseClient):
 			"account_id": self.user.account.account_id,
 			"date": t.transaction_date.strftime("%Y-%m-%d"),
 			"amount": - t.amount,
-			"payee_name": None if 'Transfer : ' in t.payee_name else t.payee_name,
+			"payee_name": t.payee_name,
 			"memo": t.memo,
 			"cleared": 'cleared',
 			"approved": False,
