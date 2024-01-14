@@ -12,17 +12,8 @@ class YnabSplitBudget:
 	def __init__(self, path: str):
 		with Path(path).open(mode='r') as f:
 			config_dict = yaml.safe_load(f)
-		self._config = Config(user_1=self._load_user(config_dict['user_1']),
-							  user_2=self._load_user(config_dict['user_2']))
-
-	@staticmethod
-	def _load_user(user_dict: dict) -> User:
-		account = BaseClient().fetch_account(budget_name=user_dict['budget'],
-										  account_name=user_dict['account'],
-										  user_name=user_dict['name'],
-										  token=user_dict['token'])
-		return User(name=user_dict['name'], token=user_dict['token'], account=account,
-					flag=user_dict['flag'])
+		self._config = Config(user_1=UserLoader().load(config_dict['user_1']),
+							  user_2=UserLoader().load(config_dict['user_2']))
 
 	def _fetch_user(self, user_name: str):
 		return next(u for u in (self._config.user_1, self._config.user_2) if u.name == user_name)
@@ -43,3 +34,12 @@ class YnabSplitBudget:
 		[c.insert_split(st) for st in st_list]
 		print(f'split {len(st_list)} transactions for {user_name}')
 		return len(st_list)
+
+
+class UserLoader:
+
+	@staticmethod
+	def load(user_dict: dict) -> User:
+		c = BaseClient(token=user_dict['token'], user_name=user_dict['name'])
+		account = c.fetch_account(budget_id=user_dict['budget'], account_id=user_dict['account'])
+		return User(name=user_dict['name'], token=user_dict['token'], account=account, flag=user_dict['flag'])

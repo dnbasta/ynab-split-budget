@@ -17,19 +17,25 @@ pip install ynab-split-budget
 ```
 
 ## Create `config.yaml`
+Create a file with below content. 
+
+You can find the ID of the budget and of the account if you go to https://app.ynab.com/ and open the target account by
+clicking on the name on the left hand side menu. The URL does now contain both IDs 
+`https://app.ynab.com/<budget_id>/accounts/<account_id>`
+
 Save the file at a convenient space and provide the path and name to the library when initializing
 ```yaml
 user_1:
   name: <user_name>
   token: <ynab_token>
-  budget: <ynab_budget_name>
-  account: <ynab_budget_account_name>
+  budget: <budget_id>
+  account: <account_id>
   flag: purple
 user_2:
   name: <user_name>
   token: <ynab_token>
-  budget: <ynab_budget_name>
-  account: <ynab_budget_account_name>
+  budget: <budget_id>
+  account: <account_id>
   flag: blue
 ```
 

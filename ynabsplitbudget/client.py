@@ -24,28 +24,31 @@ class ClientMixin:
 
 class BaseClient(ClientMixin):
 
-	def fetch_account(self, budget_name: str, account_name: str, token: str, user_name: str) -> Account:
-		r = requests.get(f'{YNAB_BASE_URL}budgets?include_accounts=true', headers=self._header(token))
+	def __init__(self, token: str, user_name: str):
+		self._token = token
+		self._user_name = user_name
+
+	def fetch_account(self, budget_id: str, account_id: str) -> Account:
+		r = requests.get(f'{YNAB_BASE_URL}budgets?include_accounts=true', headers=self._header(self._token))
 		r.raise_for_status()
-		r_dict = r.json()
+		data_dict = r.json()['data']
 
 		try:
-			budget = next(b for b in r_dict['data']['budgets'] if b['name'] == budget_name)
+			budget = next(b for b in data_dict['budgets'] if b['id'] == budget_id)
 		except StopIteration:
-			raise BudgetNotFound(f"No budget with name '{budget_name} found for {user_name}'")
+			raise BudgetNotFound(f"No budget with id '{budget_id} found for {self._user_name}'")
 
 		try:
-			account = next(a for a in budget['accounts'] if a['name'] == account_name and a['deleted'] is False)
-			transfer_payee_id = account['transfer_payee_id']
+			account = next(a for a in budget['accounts'] if a['id'] == account_id and a['deleted'] is False)
 		except StopIteration:
-			raise AccountNotFound(f"No Account with name '{account_name}' fund in budget '{budget_name} "
-								  f"for user {user_name}'")
+			raise AccountNotFound(f"No Account with id '{account_id}' fund in budget '{budget['name']} "
+								  f"for user {self._user_name}'")
 
-		return Account(budget_id=budget['id'],
-					   account_id=account['id'],
-					   transfer_payee_id=transfer_payee_id,
-					   budget_name=budget_name,
-					   account_name=account_name,
+		return Account(budget_id=budget_id,
+					   budget_name=budget['name'],
+					   account_id=account_id,
+					   account_name=account['name'],
+					   transfer_payee_id=account['transfer_payee_id'],
 					   currency=budget['currency_format']['iso_code'])
 
 

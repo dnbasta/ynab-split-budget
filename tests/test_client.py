@@ -13,7 +13,7 @@ from ynabsplitbudget.models.user import User
 
 
 @pytest.mark.parametrize('budget, account, expected', [('bullshit', 'bullshit', BudgetNotFound),
-													   ('sample_budget_name', 'bullshit', AccountNotFound)])
+													   ('sample_budget_id', 'bullshit', AccountNotFound)])
 @patch('ynabsplitbudget.client.requests.get')
 def test_fetch_account_fails(mock_response, mock_budget, budget, account, expected):
 	# Arrange
@@ -23,8 +23,8 @@ def test_fetch_account_fails(mock_response, mock_budget, budget, account, expect
 
 	# Act
 	with pytest.raises(expected):
-		BaseClient().fetch_account(budget_name=budget, account_name=account, user_name='sample_user',
-								   token='sample_token')
+		c = BaseClient(token='', user_name='')
+		c.fetch_account(budget_id=budget, account_id=account)
 
 
 @patch('ynabsplitbudget.client.requests.get')
@@ -35,8 +35,8 @@ def test_fetch_account_passes(mock_response, mock_budget):
 	mock_response.return_value = mock_resp_obj
 
 	# Act
-	a = BaseClient().fetch_account(budget_name='sample_budget_name',
-								   account_name='sample_account_name', user_name='sample_user', token='sample_token')
+	c = BaseClient(token='', user_name='')
+	a = c.fetch_account(budget_id='sample_budget_id', account_id='sample_account_id')
 
 	# Assert
 	assert isinstance(a, Account)
