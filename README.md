@@ -56,7 +56,7 @@ $ python -m ynabsplitbudget -c <path/config.yaml> -u <user_name> -s | --split-tr
 3. Clear the newly split transactions in the account you created for sharing.
 4. Run the insert functionality either as python library or from the command line
 ```py
-ynab_split_budget.insert_complements()
+ynab_split_budget.insert_complements(partner='<partner_name>')
 
 ```
 ```bash
