@@ -25,14 +25,12 @@ clicking on the name on the left hand side menu. The URL does now contain both I
 
 Save the file at a convenient space and provide the path and name to the library when initializing
 ```yaml
-user_1:
-  name: <user_name>
+user_name:
   token: <ynab_token>
   budget: <budget_id>
   account: <account_id>
   flag: purple
-user_2:
-  name: <user_name>
+partner_name:
   token: <ynab_token>
   budget: <budget_id>
   account: <account_id>
@@ -48,21 +46,21 @@ in this split will be transferred to your sharing account.
 ```py
 from ynabsplitbudget import YnabSplitBudget
 
-ynab_split_budget = YnabSplitBudget('path/config.yaml')
-ynab_split_budget.split_transactions('user_name')
+ynab_split_budget = YnabSplitBudget(path='path/config.yaml', user='<user_name>')
+ynab_split_budget.split_transactions()
 
 ```
 ```bash
-$ python -m -c <path/config.yaml> -u <user_name> -s | --sync-transactions
+$ python -m ynabsplitbudget -c <path/config.yaml> -u <user_name> -s | --split-transactions
 ```
 3. Clear the newly split transactions in the account you created for sharing.
 4. Run the insert functionality either as python library or from the command line
 ```py
-ynab_split_budget.insert_complements('user_name')
+ynab_split_budget.insert_complements()
 
 ```
 ```bash
-$ python -m -c <path/config.yaml> -u <user_name> -i | --insert-complements
+$ python -m ynabsplitbudget -c <path/config.yaml> -u <user_name> -p <partner_name> -i | --insert-complements
 ```
 ## Development
 

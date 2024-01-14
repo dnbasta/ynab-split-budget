@@ -10,3 +10,7 @@ class AccountNotFound(Exception):
 
 class SplitNotValid(Exception):
 	pass
+
+
+class UserNotFound(Exception):
+	pass
