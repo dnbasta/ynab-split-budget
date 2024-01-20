@@ -157,3 +157,18 @@ def test__build_transaction_fail(mock):
 	# Assert
 	assert not mock.called
 	assert st is None
+
+
+@patch('ynabsplitbudget.client.requests.get')
+def test_fetch_balance(mock_response):
+	# Arrange
+	r = MagicMock()
+	r.json.return_value = {'data': {'account': {'cleared_balance': 100}}}
+	mock_response.return_value = r
+	# Act
+
+	c = SyncClient(user=MagicMock())
+	b = c.fetch_balance()
+
+	# Assert
+	assert b == 100

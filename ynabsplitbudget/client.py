@@ -102,6 +102,12 @@ class SyncClient(BaseClient):
 						  headers=self._header(self.user.token))
 		r.raise_for_status()
 
+	def fetch_balance(self) -> int:
+		url = f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/accounts/{self.user.account.account_id}'
+		r = requests.get(url, headers=self._header(self.user.token))
+		r.raise_for_status()
+		return r.json()['data']['account']['cleared_balance']
+
 
 @dataclass
 class SplitClient(BaseClient):

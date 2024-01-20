@@ -2,8 +2,8 @@ from pathlib import Path
 
 import yaml
 
-from ynabsplitbudget.client import BaseClient, SplitClient
-from ynabsplitbudget.models.exception import UserNotFound
+from ynabsplitbudget.client import BaseClient, SplitClient, SyncClient
+from ynabsplitbudget.models.exception import UserNotFound, BalancesDontMatch
 from ynabsplitbudget.models.user import User
 from ynabsplitbudget.syncrepository import SyncRepository
 
@@ -28,6 +28,16 @@ class YnabSplitBudget:
 		[c.insert_split(st) for st in st_list]
 		print(f'split {len(st_list)} transactions for {self._user.name}')
 		return len(st_list)
+
+	def raise_on_balance_mismatch(self, partner: str):
+		partner = self._userloader.load(partner)
+
+		user_balance = SyncClient(user=self._user).fetch_balance()
+		partner_balance = SyncClient(user=partner).fetch_balance()
+
+		if user_balance + partner_balance != 0:
+			raise BalancesDontMatch({'user': {'name': self._user.name, 'balance': user_balance},
+									 'partner': {'name': partner.name, 'balance': partner_balance}})
 
 
 class UserLoader:

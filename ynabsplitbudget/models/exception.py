@@ -14,3 +14,7 @@ class SplitNotValid(Exception):
 
 class UserNotFound(Exception):
 	pass
+
+
+class BalancesDontMatch(Exception):
+	pass
