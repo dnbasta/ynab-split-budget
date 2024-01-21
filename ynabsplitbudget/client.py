@@ -1,13 +1,12 @@
-import re
 from dataclasses import dataclass
 from datetime import date, datetime
-from typing import List, Optional
+from typing import List
 
 import requests
 
 from ynabsplitbudget.models.splittransaction import SplitTransaction
-from ynabsplitbudget.transactionbuilder import TransactionBuilder
-from ynabsplitbudget.models.exception import BudgetNotFound, AccountNotFound, SplitNotValid
+from ynabsplitbudget.transactionbuilder import TransactionBuilder, SplitTransactionBuilder
+from ynabsplitbudget.models.exception import BudgetNotFound, AccountNotFound
 from ynabsplitbudget.models.account import Account
 from ynabsplitbudget.models.transaction import Transaction, RootTransaction
 from ynabsplitbudget.models.user import User
@@ -122,11 +121,10 @@ class SplitClient(BaseClient):
 
 		transactions_dicts = [t for t in data_dict['transactions'] if not t['cleared'] in ('reconciled', 'uncleared')
 							  and t['deleted'] is False and len(t['subtransactions']) == 0]
+		stb = SplitTransactionBuilder()
+		flag_splits = [stb.build(t) for t in transactions_dicts if t['flag_color'] == self.user.flag]
 
-		flag_splits = self._filter_none([self._build_transaction(t) for t in transactions_dicts
-										 if t['flag_color'] == self.user.flag])
-
-		return flag_splits
+		return [s for s in flag_splits if s is not None]
 
 	def insert_split(self, t: SplitTransaction):
 		data = {'transaction': {
@@ -144,41 +142,3 @@ class SplitClient(BaseClient):
 
 		r = requests.put(url, json=data, headers=self._header(self.user.token))
 		r.raise_for_status()
-
-	@staticmethod
-	def _filter_none(li: list) -> list:
-		return [i for i in li if i is not None]
-
-	def _build_transaction(self, t_dict: dict) -> Optional[SplitTransaction]:
-		try:
-			split_amount = self._parse_split(t_dict)
-			return SplitTransaction.from_dict(t_dict=t_dict, split_amount=split_amount)
-		except SplitNotValid as e:
-			print(e)
-			return None
-
-	@staticmethod
-	def _parse_split(t_dict: dict) -> Optional[float]:
-		amount = t_dict['amount']
-		rep = f"[{t_dict['date']} | {t_dict['payee_name']} | {amount/1000:.2f} | {t_dict['memo']}]"
-
-		try:
-			r = re.search(r'@(\d+\.?\d*)(%?)', t_dict['memo'])
-		except TypeError:
-			r = None
-
-		# return half the amount if no split attribution is found
-		if r is None:
-			return amount * 0.5
-
-		split_number = float(r.groups()[0])
-		if r.groups()[1] == '%':
-			if split_number <= 100:
-				return amount * split_number / 100
-			raise SplitNotValid(f"Split is above 100% for transaction {rep}")
-		if split_number * 1000 > abs(amount):
-			raise SplitNotValid(f"Split is above total amount of {amount / 1000:.2f} for transaction {rep}")
-		sign = -1 if amount < 0 else 1
-		return sign * split_number * 1000
-
-

@@ -10,6 +10,7 @@ from ynabsplitbudget.models.exception import BudgetNotFound, AccountNotFound, Sp
 from ynabsplitbudget.models.splittransaction import SplitTransaction
 from ynabsplitbudget.models.transaction import RootTransaction
 from ynabsplitbudget.models.user import User
+from ynabsplitbudget.transactionbuilder import SplitParser, SplitTransactionBuilder
 
 
 @pytest.mark.parametrize('budget, account, expected', [('bullshit', 'bullshit', BudgetNotFound),
@@ -104,59 +105,6 @@ def test_fetch_new_to_split_flag(mock_response, mock_transaction_dict):
 	# Assert
 	assert isinstance(st[0], SplitTransaction)
 	assert st[0].split_amount == 500
-
-
-@pytest.mark.parametrize('test_input, expected', [('xxx', -1000), ('xxx @25%:xxx', -500), ('@33%', -660), ('@0.7', -700),
-												  (None, -1000)])
-def test__parse_split_pass(test_input, expected):
-	# Arrange
-	c = SplitClient(user=MagicMock())
-	t_dict = {'date': '2023-12-01', 'payee_name': 'payee', 'amount': -2000, 'memo': test_input}
-
-	# Act
-	split_amount = c._parse_split(t_dict)
-
-	# Assert
-	assert split_amount == expected
-
-
-@pytest.mark.parametrize('test_input', ['@110%', '@2'])
-def test__parse_split_fail(test_input):
-	# Arrange
-	c = SplitClient(user=MagicMock())
-	t_dict = {'date': '2023-12-01', 'payee_name': 'payee', 'amount': -1000, 'memo': test_input}
-
-	# Assert
-	with pytest.raises(SplitNotValid):
-		# Act
-		c._parse_split(t_dict)
-
-
-@patch('ynabsplitbudget.client.SplitTransaction.from_dict', return_value=MagicMock(spec=SplitTransaction))
-def test__build_transaction_success(mock):
-	# Arrange
-	c = SplitClient(user=MagicMock())
-	t_dict = {'date': '2023-12-01', 'payee_name': 'payee', 'amount': 1000, 'memo': 'xxx'}
-
-	# Act
-	st = c._build_transaction(t_dict=t_dict)
-
-	# Assert
-	mock.assert_called_once_with(t_dict=t_dict, split_amount=500)
-
-
-@patch('ynabsplitbudget.client.SplitTransaction.from_dict', return_value=MagicMock(spec=SplitTransaction))
-def test__build_transaction_fail(mock):
-	# Arrange
-	c = SplitClient(user=MagicMock())
-	t_dict = {'date': '2023-12-01', 'payee_name': 'payee', 'amount': 1000, 'memo': '@110%'}
-
-	# Act
-	st = c._build_transaction(t_dict=t_dict)
-
-	# Assert
-	assert not mock.called
-	assert st is None
 
 
 @patch('ynabsplitbudget.client.requests.get')
