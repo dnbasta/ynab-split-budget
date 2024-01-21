@@ -16,5 +16,9 @@ class UserNotFound(Exception):
 	pass
 
 
+class ConfigNotValid(Exception):
+	pass
+
+
 class BalancesDontMatch(Exception):
 	pass
