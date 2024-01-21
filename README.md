@@ -66,9 +66,9 @@ ynab_split_budget.raise_on_balances_off()
 ## Run via bash commands
 You can run this package also from bash with the following commands
 ```bash
-$ python -m ynabsplitbudget -c <path/config.yaml> -u <user_name> -s | --split-transactions
-$ python -m ynabsplitbudget -c <path/config.yaml> -u <user_name> -i | --insert-complements
-$ python -m ynabsplitbudget -c <path/config.yaml> -u <user_name> -b | --check-balances
+$ python -m ynabsplitbudget -c <path/config.yaml#user_name> -s | --split-transactions
+$ python -m ynabsplitbudget -c <path/config.yaml#user_name> -i | --insert-complements
+$ python -m ynabsplitbudget -c <path/config.yaml#user_name> -b | --check-balances
 ```
 ## Development
 

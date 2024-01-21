@@ -13,11 +13,9 @@ if __name__ == '__main__':
 	# execute only if run as the entry point into the program
 
 	parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-									 usage='ynabsplitaccount [-c | --config-path] <config_path> '
-										   '[-u | --user-name] <user_name> '
+									 usage='ynabsplitaccount [-c | --config] <path/file.yaml#user> '
 										   '[-s | --split-transactions] [-i | --insert-complements]')
-	parser.add_argument("-u", "--user-name", type=str, help="user to do the action for", required=True)
-	parser.add_argument("-c", "--config-path", type=str, help="path of config YAML to use")
+	parser.add_argument("-c", "--config", type=str, help="path of config YAML to use and user", required=True)
 	parser.add_argument("-s", "--split-transactions", action="store_true",
 						help="split transactions from account")
 	parser.add_argument("-i", "--insert-complements", action="store_true",
@@ -28,13 +26,14 @@ if __name__ == '__main__':
 	args = parser.parse_args()
 
 	warnings.showwarning = custom_warn
-	ysb = YnabSplitBudget(path=args.config_path, user=args.user_name)
+	path, user_name = args.config.split('#')
+	ysb = YnabSplitBudget(path=path, user=user_name)
 
 	if args.split_transactions:
 		ysb.split_transactions()
 	if args.insert_complements:
 		ysb.insert_complements()
 	if args.check_balances:
-		ysb.raise_on_balance_mismatch()
+		ysb.raise_on_balances_off()
 
 
