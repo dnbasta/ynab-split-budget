@@ -39,10 +39,11 @@ partner_name:
 
 ## Usage
 ### 1. Create a transaction
-Create a transaction in your budget and add the defined color flag. It needs to be cleared and not yet reconciled. 
+Create a transaction in your budget and add the defined color flag. Only cleared transactions will be considered. 
 By default, the transaction will be split in half, but you can specify a different split by adding
 `@x%` for percentage or `@x` for specific amount in the memo of the transaction. The amount you specify
-in this split will be transferred to your sharing account.
+in this split will be transferred to your sharing account. You can also create a plain transfer to the shared account 
+which will be completely allocated to the partner account.
 ### 2. Run the split functionality
 ```py
 from ynabsplitbudget import YnabSplitBudget
