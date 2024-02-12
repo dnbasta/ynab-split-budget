@@ -42,8 +42,18 @@ class LookupTransaction:
 
 	@classmethod
 	def from_dict(cls, t_dict: dict):
-		tt_ids = [st['transfer_transaction_id'] for st in t_dict['subtransactions']
+
+		# values if transaction is Transfer
+		if t_dict['transfer_transaction_id']:
+			tt_ids = [t_dict['transfer_transaction_id']]
+			payee_name = t_dict['import_payee_name']
+
+		# values if transaction is split
+		else:
+			tt_ids = [st['transfer_transaction_id'] for st in t_dict['subtransactions']
 				  if st['transfer_transaction_id'] is not None]
-		return cls(payee_name=t_dict['payee_name'],
+			payee_name = t_dict['payee_name']
+
+		return cls(payee_name=payee_name,
 				   transfer_transaction_ids=tt_ids,
 				   account_id=t_dict['account_id'])
