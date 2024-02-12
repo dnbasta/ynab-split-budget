@@ -1,3 +1,4 @@
+from datetime import date
 from typing import List, Optional
 
 from ynabsplitbudget.client import SyncClient
@@ -14,30 +15,32 @@ class SyncRepository:
 	def fetch_new(self) -> List[RootTransaction]:
 		ut = self._user_client.fetch_new()
 
-		try:
-			# fetch lookup records
+		if len(ut) > 0:
 			lookup_date = min([t.transaction_date for t in ut])
-			ul = self._user_client.fetch_lookup(lookup_date)
-			pl = self._partner_client.fetch_lookup(lookup_date)
-
-			# Filter for transactions without child
-			cf = ChildFinder(lookup=pl)
-			transactions_wo_child = [t for t in ut if cf.find(t) is None]
-
-			# Replace payee with original one in case of split transaction
-			pr = PayeeReplacer(lookup=ul)
-			transactions = [pr.replace(t) for t in transactions_wo_child]
-
-			return transactions
-
-		except ValueError:
-			return []
+			transactions_wo_complement = self.find_transactions_wo_complement(transactions=ut, lookup_date=lookup_date)
+			transactions_replaced_payee = self.replace_payee(transactions=transactions_wo_complement,
+															 lookup_date=lookup_date)
+			return transactions_replaced_payee
+		return []
 
 	def insert_complements(self, transactions: List[RootTransaction]):
 		[self._partner_client.insert_complement(t) for t in transactions]
 
+	def find_transactions_wo_complement(self, transactions: List[RootTransaction],
+										lookup_date: date) -> List[RootTransaction]:
+		pl = self._partner_client.fetch_lookup(lookup_date)
+		cf = ComplementFinder(lookup=pl)
+		transactions_wo_complement = [t for t in transactions if cf.find(t) is None]
+		return transactions_wo_complement
 
-class ChildFinder:
+	def replace_payee(self, transactions: List[RootTransaction], lookup_date: date) -> List[RootTransaction]:
+		ul = self._user_client.fetch_lookup(lookup_date)
+		pr = PayeeReplacer(lookup=ul)
+		transactions_replaced = [pr.replace(t) for t in transactions]
+		return transactions_replaced
+
+
+class ComplementFinder:
 
 	def __init__(self, lookup: List[Transaction]):
 		self._lookup = [l for l in lookup if isinstance(l, ComplementTransaction)]
