@@ -119,7 +119,7 @@ class SplitClient(BaseClient):
 		r.raise_for_status()
 		data_dict = r.json()['data']
 
-		transactions_dicts = [t for t in data_dict['transactions'] if not t['cleared'] in ('reconciled', 'uncleared')
+		transactions_dicts = [t for t in data_dict['transactions'] if not t['cleared'] == 'uncleared'
 							  and t['deleted'] is False and len(t['subtransactions']) == 0]
 		stb = SplitTransactionBuilder()
 		flag_splits = [stb.build(t) for t in transactions_dicts if t['flag_color'] == self.user.flag]
