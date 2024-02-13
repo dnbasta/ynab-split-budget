@@ -1,10 +1,13 @@
 # ynab-split-budget
 
 [![GitHub Release](https://img.shields.io/github/release/dnbasta/ynab-split-budget?style=flat)]() 
+[![Github Release](https://img.shields.io/maintenance/yes/2100)]()
 
 This library enables cost sharing across two YNAB budgets. It requires two dedicated accounts in each budget to which
 each budget owner can transfer amounts from their own budget. Each transfer is considered as its opposite in the other 
 account.
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/dnbasta)
 
 ## Preparations in YNAB
 1. Create a checking account for the cost sharing in both YNAB budgets.
