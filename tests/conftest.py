@@ -11,6 +11,7 @@ def mock_transaction_dict():
 			'category_id': 'sample_category_id',
 			'deleted': False,
 			'account_id': 'sample_account',
+			'transfer_transaction_id': None,
 			'amount': 1000,
 			'date': '2023-10-01',
 			'cleared': 'cleared',

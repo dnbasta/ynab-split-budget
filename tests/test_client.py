@@ -1,5 +1,5 @@
 from datetime import date
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, ANY
 
 import pytest
 from requests import Response
@@ -8,7 +8,7 @@ from ynabsplitbudget.client import BaseClient, SyncClient, SplitClient
 from ynabsplitbudget.models.account import Account
 from ynabsplitbudget.models.exception import BudgetNotFound, AccountNotFound, SplitNotValid
 from ynabsplitbudget.models.splittransaction import SplitTransaction
-from ynabsplitbudget.models.transaction import RootTransaction
+from ynabsplitbudget.models.transaction import RootTransaction, LookupTransaction
 from ynabsplitbudget.models.user import User
 from ynabsplitbudget.transactionbuilder import SplitParser, SplitTransactionBuilder
 
@@ -120,3 +120,43 @@ def test_fetch_balance(mock_response):
 
 	# Assert
 	assert b == 100
+
+
+@patch('ynabsplitbudget.client.SyncClient._get')
+def test_fetch_deleted(mock_response, mock_transaction_dict):
+	# Arrange
+	mock_transaction_dict['deleted'] = True
+	mock_response.return_value = {'transactions': [mock_transaction_dict]}
+
+	# Act
+	c = SyncClient(MagicMock())
+	r = c.fetch_deleted()
+
+	# Assert
+	assert len(r) == 1
+	assert isinstance(r[0], RootTransaction)
+
+
+@patch('ynabsplitbudget.client.SyncClient._get')
+def test_fetch_lookup_no_since(mock_response, mock_transaction_dict):
+	# Arrange
+	mock_response.return_value = {'transactions': [mock_transaction_dict]}
+
+	# Act
+	c = SyncClient(MagicMock())
+	r = c.fetch_lookup()
+
+	assert len(r) == 1
+	assert isinstance(r[0], LookupTransaction)
+
+
+@patch('ynabsplitbudget.client.SyncClient._get')
+def test_fetch_lookup_since(mock_get, mock_transaction_dict):
+	# Arrange
+	mock_get.return_value = {'transactions': [mock_transaction_dict]}
+
+	# Act
+	c = SyncClient(MagicMock())
+	c.fetch_lookup(since=date(2024, 1, 1))
+
+	mock_get.assert_called_with(ANY, params={'since_date': '2024-01-01'})

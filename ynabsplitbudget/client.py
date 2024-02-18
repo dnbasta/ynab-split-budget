@@ -15,10 +15,15 @@ YNAB_BASE_URL = 'https://api.ynab.com/v1/'
 
 
 class ClientMixin:
+	_token: str
 
-	@staticmethod
-	def _header(token: str):
-		return {'Authorization': f'Bearer {token}'}
+	def _header(self):
+		return {'Authorization': f'Bearer {self._token}'}
+
+	def _get(self, url: str, params: dict = None) -> dict:
+		r = requests.get(url, params=params, headers=self._header())
+		r.raise_for_status()
+		return r.json()['data']
 
 
 class BaseClient(ClientMixin):
@@ -28,9 +33,8 @@ class BaseClient(ClientMixin):
 		self._user_name = user_name
 
 	def fetch_account(self, budget_id: str, account_id: str) -> Account:
-		r = requests.get(f'{YNAB_BASE_URL}budgets?include_accounts=true', headers=self._header(self._token))
-		r.raise_for_status()
-		data_dict = r.json()['data']
+		url = f'{YNAB_BASE_URL}budgets?include_accounts=true'
+		data_dict = self._get(url)
 
 		try:
 			budget = next(b for b in data_dict['budgets'] if b['id'] == budget_id)
@@ -52,41 +56,36 @@ class BaseClient(ClientMixin):
 
 
 @dataclass
-class SyncClient(BaseClient):
-	user: User
+class SyncClient(ClientMixin):
+
+	def __init__(self, user: User):
+		self._token = user.token
+		self.user = user
+		self.transaction_builder = TransactionBuilder(user=user)
 
 	def fetch_new(self) -> List[RootTransaction]:
 		url = (f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/accounts/'
 			   f'{self.user.account.account_id}/transactions')
-
-		r = requests.get(url, headers=self._header(self.user.token))
-		r.raise_for_status()
-		data_dict = r.json()['data']
-
-		transactions_dicts = [t for t in data_dict['transactions'] if not t['cleared'] in ('reconciled', 'uncleared')
+		transactions_dicts = self._get(url)['transactions']
+		transactions_filtered = [t for t in transactions_dicts if not t['cleared'] in ('reconciled', 'uncleared')
 							  and t['deleted'] is False
 							  and (t['import_id'] is None or 's||' not in t['import_id'])]
-
-		stb = TransactionBuilder(self.user)
-		transactions = [stb.build_root_transaction(t_dict=t) for t in transactions_dicts]
-
+		transactions = [self.transaction_builder.build_root_transaction(t_dict=t) for t in transactions_filtered]
 		return transactions
 
-	def fetch_lookup(self, since: date) -> List[Transaction]:
-		params = {'since_date': datetime.strftime(since, '%Y-%m-%d')}
+	def fetch_lookup(self, since: date = None) -> List[Transaction]:
 		url = f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/transactions'
 
-		r = requests.get(url, params=params, headers=self._header(self.user.token))
-		r.raise_for_status()
-		data_dict = r.json()['data']
+		if since:
+			data_dict = self._get(url, params={'since_date': datetime.strftime(since, '%Y-%m-%d')})
+		else:
+			data_dict = self._get(url)
 
-		stb = TransactionBuilder(self.user)
-		transactions = [stb.build(t_dict=t) for t in data_dict['transactions']]
-
+		transactions = [self.transaction_builder.build(t_dict=t) for t in data_dict['transactions']]
 		return transactions
 
 	def insert_complement(self, t: RootTransaction):
-
+		url = f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/transactions'
 		data = {'transaction': {
 			"account_id": self.user.account.account_id,
 			"date": t.transaction_date.strftime("%Y-%m-%d"),
@@ -97,28 +96,32 @@ class SyncClient(BaseClient):
 			"approved": False,
 			"import_id": f's||{t.share_id}'
 		}}
-		r = requests.post(f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/transactions', json=data,
-						  headers=self._header(self.user.token))
+		r = requests.post(url, json=data, headers=self._header())
 		r.raise_for_status()
 
 	def fetch_balance(self) -> int:
 		url = f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/accounts/{self.user.account.account_id}'
-		r = requests.get(url, headers=self._header(self.user.token))
-		r.raise_for_status()
-		return r.json()['data']['account']['cleared_balance']
+		data_dict = self._get(url)
+		return data_dict['account']['cleared_balance']
+
+	def fetch_deleted(self) -> List[RootTransaction]:
+		url = f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/transactions'
+		transactions_dict = self._get(url, params={'last_knowledge_of_server': 0})['transactions']
+		transactions_deleted = [self.transaction_builder.build_root_transaction(t) for t in transactions_dict
+								if t['deleted'] is True]
+		return transactions_deleted
 
 
-@dataclass
-class SplitClient(BaseClient):
-	user: User
+class SplitClient(ClientMixin):
+
+	def __init__(self, user: User):
+		self._token = user.token
+		self.user = user
 
 	def fetch_new_to_split(self) -> List[SplitTransaction]:
 		url = f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/transactions'
 
-		r = requests.get(url, headers=self._header(self.user.token))
-		r.raise_for_status()
-		data_dict = r.json()['data']
-
+		data_dict = self._get(url)
 		transactions_dicts = [t for t in data_dict['transactions'] if not t['cleared'] == 'uncleared'
 							  and t['deleted'] is False and len(t['subtransactions']) == 0]
 		stb = SplitTransactionBuilder()
@@ -140,5 +143,5 @@ class SplitClient(BaseClient):
 		}}
 		url = f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/transactions/{t.id}'
 
-		r = requests.put(url, json=data, headers=self._header(self.user.token))
+		r = requests.put(url, json=data, headers=self._header())
 		r.raise_for_status()
