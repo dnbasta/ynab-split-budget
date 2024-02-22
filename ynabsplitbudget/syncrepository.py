@@ -1,5 +1,5 @@
-from datetime import date
-from typing import List, Optional
+from datetime import date, datetime, timedelta
+from typing import List
 
 from ynabsplitbudget.client import SyncClient
 from ynabsplitbudget.models.transaction import Transaction, RootTransaction, ComplementTransaction, LookupTransaction
@@ -12,26 +12,16 @@ class SyncRepository:
 		self._user_client = SyncClient(user)
 		self._partner_client = SyncClient(partner)
 
-	def fetch_new(self) -> List[RootTransaction]:
-		ut = self._user_client.fetch_new()
-
-		if len(ut) > 0:
-			lookup_date = min([t.transaction_date for t in ut])
-			transactions_wo_complement = self.find_transactions_wo_complement(transactions=ut, lookup_date=lookup_date)
-			transactions_replaced_payee = self.replace_payee(transactions=transactions_wo_complement,
-															 lookup_date=lookup_date)
-			return transactions_replaced_payee
-		return []
+	def fetch_roots_wo_complement(self, since: date) -> List[RootTransaction]:
+		roots = self._user_client.fetch_roots(since=since)
+		pl = [t for t in self._partner_client.fetch_lookup(since) if isinstance(t, ComplementTransaction)]
+		roots_wo_complement = [t for t in roots if t.share_id not in [lo.share_id for lo in pl]]
+		transactions_replaced_payee = self.replace_payee(transactions=roots_wo_complement,
+															 lookup_date=since)
+		return transactions_replaced_payee
 
 	def insert_complements(self, transactions: List[RootTransaction]):
 		[self._partner_client.insert_complement(t) for t in transactions]
-
-	def find_transactions_wo_complement(self, transactions: List[RootTransaction],
-										lookup_date: date) -> List[RootTransaction]:
-		pl = self._partner_client.fetch_lookup(lookup_date)
-		cf = ComplementFinder(lookup=pl)
-		transactions_wo_complement = [t for t in transactions if cf.find(t) is None]
-		return transactions_wo_complement
 
 	def replace_payee(self, transactions: List[RootTransaction], lookup_date: date) -> List[RootTransaction]:
 		ul = self._user_client.fetch_lookup(lookup_date)
@@ -39,14 +29,16 @@ class SyncRepository:
 		transactions_replaced = [pr.replace(t) for t in transactions]
 		return transactions_replaced
 
+	def find_deleted_with_orphaned_complement(self) -> List[RootTransaction]:
+		current_complements = [lo for lo in self._partner_client.fetch_lookup() if isinstance(lo, ComplementTransaction)]
+		dr = [d for d in self._user_client.fetch_deleted() if isinstance(d, RootTransaction)]
+		deleted = [d for d in dr if d.share_id in [c.share_id for c in current_complements]]
+		return deleted
 
-class ComplementFinder:
-
-	def __init__(self, lookup: List[Transaction]):
-		self._lookup = [l for l in lookup if isinstance(l, ComplementTransaction)]
-
-	def find(self, t: RootTransaction) -> Optional[ComplementTransaction]:
-		return next((c for c in self._lookup if c.share_id == t.share_id), None)
+	def fetch_balances(self) -> (int, int):
+		user_balance = self._user_client.fetch_balance()
+		partner_balance = self._partner_client.fetch_balance()
+		return user_balance, partner_balance
 
 
 class PayeeReplacer:
