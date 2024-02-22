@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import date, datetime
-from typing import List
+from typing import List, Union
 
 import requests
 
@@ -8,7 +8,7 @@ from ynabsplitbudget.models.splittransaction import SplitTransaction
 from ynabsplitbudget.transactionbuilder import TransactionBuilder, SplitTransactionBuilder
 from ynabsplitbudget.models.exception import BudgetNotFound, AccountNotFound
 from ynabsplitbudget.models.account import Account
-from ynabsplitbudget.models.transaction import Transaction, RootTransaction
+from ynabsplitbudget.models.transaction import RootTransaction, LookupTransaction, ComplementTransaction
 from ynabsplitbudget.models.user import User
 
 YNAB_BASE_URL = 'https://api.ynab.com/v1/'
@@ -72,10 +72,10 @@ class SyncClient(ClientMixin):
 							  and t['deleted'] is False
 							  and (t['import_id'] is None or 's||' not in t['import_id'])
 							  and t['payee_name'] != 'Reconciliation Balance Adjustment']
-		transactions = [self.transaction_builder.build_root_transaction(t_dict=t) for t in transactions_filtered]
+		transactions = [self.transaction_builder.build_root(t_dict=t) for t in transactions_filtered]
 		return transactions
 
-	def fetch_lookup(self, since: date) -> List[Transaction]:
+	def fetch_lookup(self, since: date) -> List[Union[RootTransaction, LookupTransaction, ComplementTransaction]]:
 		url = f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/transactions'
 		data_dict = self._get(url, params={'since_date': datetime.strftime(since, '%Y-%m-%d')})
 		transactions = [self.transaction_builder.build(t_dict=t) for t in data_dict['transactions']]

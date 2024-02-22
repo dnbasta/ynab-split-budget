@@ -1,8 +1,8 @@
-from datetime import date, datetime, timedelta
-from typing import List
+from datetime import date
+from typing import List, Union
 
 from ynabsplitbudget.client import SyncClient
-from ynabsplitbudget.models.transaction import Transaction, RootTransaction, ComplementTransaction, LookupTransaction
+from ynabsplitbudget.models.transaction import RootTransaction, ComplementTransaction, LookupTransaction
 from ynabsplitbudget.models.user import User
 
 
@@ -43,7 +43,7 @@ class SyncRepository:
 
 class PayeeReplacer:
 
-	def __init__(self, lookup: List[Transaction]):
+	def __init__(self, lookup: List[Union[RootTransaction, ComplementTransaction, LookupTransaction]]):
 		lookup_filtered = [lu for lu in lookup if isinstance(lu, LookupTransaction)]
 		self._lookup_dict = {ti: lu.payee_name for lu in lookup_filtered for ti in lu.transfer_transaction_ids}
 
