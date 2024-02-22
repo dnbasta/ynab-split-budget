@@ -1,9 +1,12 @@
+from datetime import date, timedelta, datetime
 from pathlib import Path
+from typing import List
 
 import yaml
 
 from ynabsplitbudget.client import SplitClient, SyncClient
 from ynabsplitbudget.models.exception import BalancesDontMatch
+from ynabsplitbudget.models.transaction import RootTransaction, ComplementTransaction
 from ynabsplitbudget.syncrepository import SyncRepository
 from ynabsplitbudget.userloader import UserLoader
 
@@ -14,9 +17,12 @@ class YnabSplitBudget:
 		self._user = userloader.user
 		self._partner = userloader.partner
 
-	def insert_complements(self) -> int:
+	def insert_complements(self, since: date = None) -> int:
+		if since is None:
+			since = datetime.now() - timedelta(days=30)
+
 		repo = SyncRepository(user=self._user, partner=self._partner)
-		transactions = repo.fetch_new()
+		transactions = repo.fetch_roots_wo_complement(since=since)
 
 		repo.insert_complements(transactions)
 		print(f'inserted {len(transactions)} complements into account of {self._partner.name}')
@@ -30,12 +36,10 @@ class YnabSplitBudget:
 		return len(st_list)
 
 	def raise_on_balances_off(self):
-		user_balance = SyncClient(user=self._user).fetch_balance()
-		partner_balance = SyncClient(user=self._partner).fetch_balance()
-
+		repo = SyncRepository(user=self._user, partner=self._partner)
+		user_balance, partner_balance = repo.fetch_balances()
 		if user_balance + partner_balance != 0:
-			raise BalancesDontMatch({'user': {'name': self._user.name, 'balance': user_balance},
-									 'partner': {'name': self._partner.name, 'balance': partner_balance}})
-
-
-
+			raise BalancesDontMatch({'user': {'name': self._user.name,
+											  'balance': user_balance},
+									 'partner': {'name': self._partner.name,
+												 'balance': partner_balance}})
