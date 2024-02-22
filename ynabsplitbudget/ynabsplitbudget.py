@@ -43,3 +43,11 @@ class YnabSplitBudget:
 											  'balance': user_balance},
 									 'partner': {'name': self._partner.name,
 												 'balance': partner_balance}})
+
+	def delete_orphaned_complements(self) -> List[ComplementTransaction]:
+		orphaned_complements = SyncRepository(user=self._user, partner=self._partner).find_orphaned_partner_complements()
+		c = SyncClient(self._partner)
+		[c.delete_complement(oc.id) for oc in orphaned_complements]
+		print(f'deleted {len(orphaned_complements)} orphaned complements in account of {self._partner.name}')
+		print(orphaned_complements)
+		return orphaned_complements
