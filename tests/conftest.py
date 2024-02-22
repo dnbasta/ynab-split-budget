@@ -13,7 +13,7 @@ def mock_transaction_dict():
 			'account_id': 'sample_account',
 			'transfer_transaction_id': None,
 			'amount': 1000,
-			'date': '2023-10-01',
+			'date': '2024-01-01',
 			'cleared': 'cleared',
 			'import_id': None,
 			'flag_color': 'purple',

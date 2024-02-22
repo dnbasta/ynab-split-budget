@@ -58,7 +58,7 @@ def test_fetch_new(mock_response, mock_transaction_dict):
 	mock_response.return_value = mock_resp_obj
 	# Act
 	c = SyncClient(MagicMock(account=MagicMock(account_id='sample_account')))
-	r = c.fetch_new()
+	r = c.fetch_roots(since=date(2024,1, 1))
 
 	# Assert
 	t = r[0]
@@ -69,7 +69,7 @@ def test_fetch_new(mock_response, mock_transaction_dict):
 	assert t.id == 'sample_id'
 	assert t.payee_name == 'sample_payee'
 	assert t.memo == 'sample_memo'
-	assert t.transaction_date == date(2023, 10, 1)
+	assert t.transaction_date == date(2024, 1, 1)
 
 
 @patch('ynabsplitbudget.client.requests.get')
@@ -81,7 +81,7 @@ def test_fetch_new_empty(mock_response, mock_transaction_dict):
 	mock_response.return_value = mock_resp_obj
 	# Act
 	c = SyncClient(MagicMock())
-	r = c.fetch_new()
+	r = c.fetch_roots(since=date(2024, 1, 1))
 
 	# Assert
 	assert len(r) == 0
