@@ -29,11 +29,11 @@ class SyncRepository:
 		transactions_replaced = [pr.replace(t) for t in transactions]
 		return transactions_replaced
 
-	def find_deleted_with_orphaned_complement(self) -> List[RootTransaction]:
+	def find_orphaned_partner_complements(self) -> List[ComplementTransaction]:
 		current_complements = [lo for lo in self._partner_client.fetch_lookup() if isinstance(lo, ComplementTransaction)]
 		dr = [d for d in self._user_client.fetch_deleted() if isinstance(d, RootTransaction)]
-		deleted = [d for d in dr if d.share_id in [c.share_id for c in current_complements]]
-		return deleted
+		orphaned_complements = [c for c in current_complements if c.share_id in [d.share_id for d in dr]]
+		return orphaned_complements
 
 	def fetch_balances(self) -> (int, int):
 		user_balance = self._user_client.fetch_balance()
