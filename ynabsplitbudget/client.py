@@ -63,13 +63,15 @@ class SyncClient(ClientMixin):
 		self.user = user
 		self.transaction_builder = TransactionBuilder(user=user)
 
-	def fetch_new(self) -> List[RootTransaction]:
+	def fetch_roots(self, since: date) -> List[RootTransaction]:
 		url = (f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/accounts/'
 			   f'{self.user.account.account_id}/transactions')
-		transactions_dicts = self._get(url)['transactions']
-		transactions_filtered = [t for t in transactions_dicts if not t['cleared'] in ('reconciled', 'uncleared')
+
+		transactions_dicts = self._get(url, params={'since_date': datetime.strftime(since, '%Y-%m-%d')})['transactions']
+		transactions_filtered = [t for t in transactions_dicts if not t['cleared'] == 'uncleared'
 							  and t['deleted'] is False
-							  and (t['import_id'] is None or 's||' not in t['import_id'])]
+							  and (t['import_id'] is None or 's||' not in t['import_id'])
+							  and t['payee_name'] != 'Reconciliation Balance Adjustment']
 		transactions = [self.transaction_builder.build_root_transaction(t_dict=t) for t in transactions_filtered]
 		return transactions
 
@@ -111,6 +113,11 @@ class SyncClient(ClientMixin):
 								if t['deleted'] is True]
 		return transactions_deleted
 
+	def delete_complement(self, transaction_id: str) -> None:
+		url = f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/transactions/{transaction_id}'
+		r = requests.delete(url, headers=self._header())
+		r.raise_for_status()
+
 
 class SplitClient(ClientMixin):
 
@@ -131,12 +138,12 @@ class SplitClient(ClientMixin):
 
 	def insert_split(self, t: SplitTransaction):
 		data = {'transaction': {
-			"subtransactions": [{"amount": int(t.split_amount),
+			"subtransactions": [{"amount": int(round(t.split_amount)),
 								 "payee_id": self.user.account.transfer_payee_id,
 								 "memo": t.memo,
 								 "cleared": "cleared"
 								},
-								{"amount": int(t.amount - t.split_amount),
+								{"amount": int(t.amount - round(t.split_amount)),
 								 "category_id": t.category.id,
 								 "cleared": "cleared"
 								 }]
