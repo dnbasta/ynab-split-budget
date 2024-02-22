@@ -75,14 +75,9 @@ class SyncClient(ClientMixin):
 		transactions = [self.transaction_builder.build_root_transaction(t_dict=t) for t in transactions_filtered]
 		return transactions
 
-	def fetch_lookup(self, since: date = None) -> List[Transaction]:
+	def fetch_lookup(self, since: date) -> List[Transaction]:
 		url = f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/transactions'
-
-		if since:
-			data_dict = self._get(url, params={'since_date': datetime.strftime(since, '%Y-%m-%d')})
-		else:
-			data_dict = self._get(url)
-
+		data_dict = self._get(url, params={'since_date': datetime.strftime(since, '%Y-%m-%d')})
 		transactions = [self.transaction_builder.build(t_dict=t) for t in data_dict['transactions']]
 		return transactions
 
@@ -105,13 +100,6 @@ class SyncClient(ClientMixin):
 		url = f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/accounts/{self.user.account.account_id}'
 		data_dict = self._get(url)
 		return data_dict['account']['cleared_balance']
-
-	def fetch_deleted(self) -> List[RootTransaction]:
-		url = f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/transactions'
-		transactions_dict = self._get(url, params={'last_knowledge_of_server': 0})['transactions']
-		transactions_deleted = [self.transaction_builder.build_root_transaction(t) for t in transactions_dict
-								if t['deleted'] is True]
-		return transactions_deleted
 
 	def delete_complement(self, transaction_id: str) -> None:
 		url = f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/transactions/{transaction_id}'
