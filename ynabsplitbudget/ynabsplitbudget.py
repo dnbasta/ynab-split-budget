@@ -1,6 +1,6 @@
 from datetime import date, timedelta, datetime
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 import yaml
 
@@ -18,9 +18,7 @@ class YnabSplitBudget:
 		self._partner = userloader.partner
 
 	def insert_complements(self, since: date = None) -> int:
-		if since is None:
-			since = datetime.now() - timedelta(days=30)
-
+		since = self._substitute_default_since(since)
 		repo = SyncRepository(user=self._user, partner=self._partner)
 		transactions = repo.fetch_roots_wo_complement(since=since)
 
@@ -44,10 +42,17 @@ class YnabSplitBudget:
 									 'partner': {'name': self._partner.name,
 												 'balance': partner_balance}})
 
-	def delete_orphaned_complements(self) -> List[ComplementTransaction]:
-		orphaned_complements = SyncRepository(user=self._user, partner=self._partner).find_orphaned_partner_complements()
+	def delete_orphaned_complements(self, since: date = None) -> List[ComplementTransaction]:
+		since = self._substitute_default_since(since)
+		orphaned_complements = SyncRepository(user=self._user, partner=self._partner).find_orphaned_partner_complements(since)
 		c = SyncClient(self._partner)
 		[c.delete_complement(oc.id) for oc in orphaned_complements]
 		print(f'deleted {len(orphaned_complements)} orphaned complements in account of {self._partner.name}')
 		print(orphaned_complements)
 		return orphaned_complements
+
+	@staticmethod
+	def _substitute_default_since(since: Optional[date]):
+		if since is None:
+			return datetime.now() - timedelta(days=30)
+		return since
