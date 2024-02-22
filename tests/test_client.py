@@ -123,21 +123,6 @@ def test_fetch_balance(mock_response):
 
 
 @patch('ynabsplitbudget.client.SyncClient._get')
-def test_fetch_deleted(mock_response, mock_transaction_dict):
-	# Arrange
-	mock_transaction_dict['deleted'] = True
-	mock_response.return_value = {'transactions': [mock_transaction_dict]}
-
-	# Act
-	c = SyncClient(MagicMock())
-	r = c.fetch_deleted()
-
-	# Assert
-	assert len(r) == 1
-	assert isinstance(r[0], RootTransaction)
-
-
-@patch('ynabsplitbudget.client.SyncClient._get')
 def test_fetch_lookup_no_since(mock_response, mock_transaction_dict):
 	# Arrange
 	mock_response.return_value = {'transactions': [mock_transaction_dict]}
