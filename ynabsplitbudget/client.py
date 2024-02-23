@@ -3,6 +3,7 @@ from datetime import date, datetime
 from typing import List, Union
 
 import requests
+from requests import HTTPError
 
 from ynabsplitbudget.models.splittransaction import SplitTransaction
 from ynabsplitbudget.transactionbuilder import TransactionBuilder, SplitTransactionBuilder
@@ -82,6 +83,17 @@ class SyncClient(ClientMixin):
 		return transactions
 
 	def insert_complement(self, t: RootTransaction):
+		iteration = 0
+		try_again = True
+		while try_again:
+			try:
+				self._insert(t, iteration=iteration)
+				try_again = False
+			except HTTPError as e:
+				if e.response.status_code == 409:
+					iteration += 1
+
+	def _insert(self, t: RootTransaction, iteration: int):
 		url = f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/transactions'
 		data = {'transaction': {
 			"account_id": self.user.account.account_id,
@@ -91,7 +103,7 @@ class SyncClient(ClientMixin):
 			"memo": t.memo,
 			"cleared": 'cleared',
 			"approved": False,
-			"import_id": f's||{t.share_id}'
+			"import_id": f's||{t.share_id}||{iteration}'
 		}}
 		r = requests.post(url, json=data, headers=self._header())
 		r.raise_for_status()

@@ -129,7 +129,7 @@ def test_fetch_lookup_no_since(mock_response, mock_transaction_dict):
 
 	# Act
 	c = SyncClient(MagicMock())
-	r = c.fetch_lookup()
+	r = c.fetch_lookup(since=date(2024, 1, 1))
 
 	assert len(r) == 1
 	assert isinstance(r[0], LookupTransaction)
