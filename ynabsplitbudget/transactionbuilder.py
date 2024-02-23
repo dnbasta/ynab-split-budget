@@ -34,7 +34,9 @@ class TransactionBuilder:
 
 	@staticmethod
 	def build_complement(t_dict: dict) -> ComplementTransaction:
-		share_id = re.search(r's\|\|(.[^|]*)(?:\|\|)?(\d*)', t_dict['import_id'])[1]
+		regex = re.search(r's\|\|(.[^|]*)(?:\|\|)?(\d*)', t_dict['import_id']).groups()
+		share_id = regex[0]
+		iteration = int(regex[1]) if regex[1] != '' else 0
 		return ComplementTransaction(id=t_dict['id'],
 									 transaction_date=datetime.strptime(t_dict['date'], '%Y-%m-%d').date(),
 									 memo=t_dict['memo'],
@@ -42,7 +44,7 @@ class TransactionBuilder:
 									 amount=t_dict['amount'],
 									 account_id=t_dict['account_id'],
 									 share_id=share_id,
-									 iteration=0)
+									 iteration=iteration)
 
 	@staticmethod
 	def build_lookup(t_dict: dict) -> LookupTransaction:
