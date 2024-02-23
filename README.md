@@ -58,20 +58,31 @@ ynab_split_budget.split_transactions()
 Using the YNAB web interface go to your split account and clear the newly split transaction over there. 
 This can currently not be automated as YNAB API can't clear split transactions at this point in time.
 ### 4. Run the insert functionality
+By default the library will compare and insert transactions of the last 30 days. If you would like to do it for a
+different timeframe you can provide a `since` argument to the function with a value from `datetime.date`
 ```py
 ynab_split_budget.insert_complements()
 ```
-### 5. (Optional) Check Balances
+## Advanced Usage
+### Check Balances
 Additionally you can check if the cleared balances in both accounts match. If they don't match you will get back a
 `BalancesDontMatch` Error which also gives you the two values of the balances.
 ```py
 ynab_split_budget.raise_on_balances_off()
 ```
-## Run via bash commands
+### Delete Orphaned Complements
+If you delete a transaction in your share account you can use this function to delete the respective complement on your
+partners shared account. It does return a list with the deleted transactions. By default the library will compare 
+transactions of the last 30 days. If you would like to do it for a different timeframe you can provide a `since` 
+argument to the function with a value from `datetime.date`
+```py
+ynab_split_budget.delete_orphaned_complements()
+```
+### Run via bash commands
 You can run this package also from bash with the following commands
 ```bash
 $ python -m ynabsplitbudget -c <path/config.yaml#user_name> -s | --split-transactions
-$ python -m ynabsplitbudget -c <path/config.yaml#user_name> -i | --insert-complements
+$ python -m ynabsplitbudget -c <path/config.yaml#user_name> -i | --insert-complements [-d | --since-date "YYYY-mm-dd"]
 $ python -m ynabsplitbudget -c <path/config.yaml#user_name> -b | --check-balances
 ```
 ## Development
