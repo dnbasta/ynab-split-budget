@@ -13,7 +13,8 @@ from ynabsplitbudget.userloader import UserLoader
 class YnabSplitBudget:
 
 	def __init__(self, config: dict, user: str):
-		logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level='INFO')
+		self.logger = self._set_up_logger()
+
 		userloader = UserLoader(config_dict=config)
 		self._user = userloader.load(user)
 		self._partner = userloader.load_partner(user)
@@ -29,14 +30,14 @@ class YnabSplitBudget:
 		transactions = repo.fetch_roots_wo_complement(since=since)
 
 		repo.insert_complements(transactions)
-		logging.info(f'inserted {len(transactions)} complements into account of {self._partner.name}')
+		logging.getLogger(__name__).info(f'inserted {len(transactions)} complements into account of {self._partner.name}')
 		return len(transactions)
 
 	def split_transactions(self) -> int:
 		c = SplitClient(self._user)
 		st_list = c.fetch_new_to_split()
 		[c.insert_split(st) for st in st_list]
-		logging.info(f'split {len(st_list)} transactions for {self._user.name}')
+		logging.getLogger(__name__).info(f'split {len(st_list)} transactions for {self._user.name}')
 		return len(st_list)
 
 	def raise_on_balances_off(self):
@@ -53,8 +54,8 @@ class YnabSplitBudget:
 		orphaned_complements = SyncRepository(user=self._user, partner=self._partner).find_orphaned_partner_complements(since)
 		c = SyncClient(self._partner)
 		[c.delete_complement(oc.id) for oc in orphaned_complements]
-		logging.info(f'deleted {len(orphaned_complements)} orphaned complements in account of {self._partner.name}')
-		logging.info(orphaned_complements)
+		logging.getLogger(__name__).info(f'deleted {len(orphaned_complements)} orphaned complements in account of {self._partner.name}')
+		logging.getLogger(__name__).info(orphaned_complements)
 		return orphaned_complements
 
 	@staticmethod
@@ -63,3 +64,9 @@ class YnabSplitBudget:
 			return datetime.now() - timedelta(days=30)
 		return since
 
+	@staticmethod
+	def _set_up_logger() -> logging.Logger:
+		parent_name = '.'.join(__name__.split('.')[:-1])
+		logger = logging.getLogger(parent_name)
+		logger.setLevel(20)
+		return logger

@@ -98,6 +98,15 @@ argument to the function with a value from `datetime.date`
 ```py
 ynab_split_budget.delete_orphaned_complements()
 ```
+### Show Logs
+The library logs information about the result of the methods on the 'INFO' level. If you want to see these logs import
+the logging module and set in to the level `INFO`. You can also access the logger for advanced configuration via the  
+`logger` attribute of your `YnabSplitBudget`instance.
+```py
+import logging
+
+logging.basicConfig(level='INFO')
+```
 ### Run via bash commands
 You can run this package also from bash with the following commands
 ```bash

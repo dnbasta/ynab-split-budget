@@ -74,7 +74,7 @@ class SplitTransactionBuilder:
 			split_amount = SplitParser().parse_split(t_dict)
 			return SplitTransaction.from_dict(t_dict=t_dict, split_amount=split_amount)
 		except SplitNotValid as e:
-			logging.error(e)
+			logging.getLogger(__name__).error(e)
 			return None
 
 

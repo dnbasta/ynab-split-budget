@@ -1,9 +1,12 @@
 import argparse
 import sys
 import warnings
+import logging
 from datetime import datetime
 
 from ynabsplitbudget.ynabsplitbudget import YnabSplitBudget
+
+logging.basicConfig(level=logging.INFO)
 
 
 def custom_warn(message, category, filename, lineno, file=None, line=None):
