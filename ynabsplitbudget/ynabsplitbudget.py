@@ -1,21 +1,25 @@
 from datetime import date, timedelta, datetime
-from pathlib import Path
 from typing import List, Optional
 
-import yaml
 
 from ynabsplitbudget.client import SplitClient, SyncClient
+from ynabsplitbudget.fileloader import FileLoader
 from ynabsplitbudget.models.exception import BalancesDontMatch
-from ynabsplitbudget.models.transaction import RootTransaction, ComplementTransaction
+from ynabsplitbudget.models.transaction import ComplementTransaction
 from ynabsplitbudget.syncrepository import SyncRepository
 from ynabsplitbudget.userloader import UserLoader
 
 
 class YnabSplitBudget:
-	def __init__(self, path: str, user: str):
-		userloader = UserLoader(path=path, user=user)
-		self._user = userloader.user
-		self._partner = userloader.partner
+	def __init__(self, config: dict, user: str):
+		userloader = UserLoader(config_dict=config)
+		self._user = userloader.load(user)
+		self._partner = userloader.load_partner(user)
+
+	@classmethod
+	def from_yaml(cls, path: str, user: str):
+		config_dict = FileLoader(path).load()
+		return cls(config=config_dict, user=user)
 
 	def insert_complements(self, since: date = None) -> int:
 		since = self._substitute_default_since(since)

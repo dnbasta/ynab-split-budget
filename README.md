@@ -19,25 +19,40 @@ account.
 pip install ynab-split-budget
 ```
 
-## Create `config.yaml`
-Create a file with below content. 
-
+## Create config
+Create a config `dict` with the below structure. 
+```py
+CONFIG = {
+    '<user_name>': {
+        'budget': '<budget_id>',
+        'account': '<account_id>',
+        'token': '<ynab_token>',
+        'flag': '<color>'},
+    '<partner_name>': {
+        'budget': '<budget_id>',
+        'account': '<account_id>',
+        'token': '<ynab_token>',
+        'flag': '<color>'}
+}
+```
 You can find the ID of the budget and of the account if you go to https://app.ynab.com/ and open the target account by
 clicking on the name on the left hand side menu. The URL does now contain both IDs 
 `https://app.ynab.com/<budget_id>/accounts/<account_id>`
+Possible colors for the flag value are `red`, `orange`, `yellow`, `green`, `blue` and `purple`
 
-Save the file at a convenient place and provide the path to the library when initializing
+Alternatively you can save the config in a yaml file with the below structure and provide the path to the library 
+when initializing
 ```yaml
-user_name:
+<user_name>:
   token: <ynab_token>
   budget: <budget_id>
   account: <account_id>
-  flag: purple
-partner_name:
+  flag: <color>
+<partner_name>:
   token: <ynab_token>
   budget: <budget_id>
   account: <account_id>
-  flag: blue
+  flag: <color>
 ```
 
 ## Usage
@@ -47,11 +62,16 @@ By default, the transaction will be split in half, but you can specify a differe
 `@x%` for percentage or `@x` for specific amount in the memo of the transaction. The amount you specify
 in this split will be transferred to your sharing account. You can also create a plain transfer to the shared account 
 which will be completely allocated to the partner account.
-### 2. Run the split functionality
+### 2. Initialize and run the split functionality
+
 ```py
 from ynabsplitbudget import YnabSplitBudget
 
-ynab_split_budget = YnabSplitBudget(path='path/config.yaml', user='<user_name>')
+# initialize from config dict
+ynab_split_budget = YnabSplitBudget(config=CONFIG, user='<user_name>')
+# or alternatively from yaml
+ynab_split_budget = YnabSplitBudget.from_yaml(path='path/to/config.yaml', user='<user_name')
+
 ynab_split_budget.split_transactions()
 ```
 ### 3. Clear the newly split transaction

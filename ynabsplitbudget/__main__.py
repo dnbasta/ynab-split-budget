@@ -30,7 +30,7 @@ if __name__ == '__main__':
 
 	warnings.showwarning = custom_warn
 	path, user_name = args.config.split('#')
-	ysb = YnabSplitBudget(path=path, user=user_name)
+	ysb = YnabSplitBudget.from_yaml(path=path, user=user_name)
 
 	if args.split_transactions:
 		ysb.split_transactions()
