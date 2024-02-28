@@ -18,13 +18,17 @@ def test_build_transaction_success(mock):
 
 
 @patch('ynabsplitbudget.client.SplitTransaction.from_dict', return_value=MagicMock(spec=SplitTransaction))
-def test_build_transaction_fail(mock):
+def test_build_transaction_fail(mock, caplog):
 	# Arrange
 	c = SplitTransactionBuilder()
 	t_dict = {'date': '2023-12-01', 'payee_name': 'payee', 'amount': 1000, 'memo': '@110%'}
 
 	# Act
-	st = c.build(t_dict=t_dict)
+	with caplog.at_level('ERROR'):
+		st = c.build(t_dict=t_dict)
+		assert len(caplog.records) == 1
+		assert caplog.records[0].levelname == 'ERROR'
+		assert len(caplog.records[0].message) > 0
 
 	# Assert
 	assert not mock.called
