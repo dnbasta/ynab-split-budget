@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import re
 from dataclasses import dataclass
 from datetime import datetime
@@ -73,7 +74,7 @@ class SplitTransactionBuilder:
 			split_amount = SplitParser().parse_split(t_dict)
 			return SplitTransaction.from_dict(t_dict=t_dict, split_amount=split_amount)
 		except SplitNotValid as e:
-			print(e)
+			logging.error(e)
 			return None
 
 
