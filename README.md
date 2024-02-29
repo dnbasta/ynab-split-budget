@@ -58,10 +58,10 @@ when initializing
 ## Usage
 ### 1. Create a transaction
 Create a transaction in your budget and add the defined color flag. Only cleared transactions will be considered. 
-By default, the transaction will be split in half, but you can specify a different split by adding
-`@x%` for percentage or `@x` for specific amount in the memo of the transaction. The amount you specify
-in this split will be transferred to your sharing account. You can also create a plain transfer to the shared account 
-which will be completely allocated to the partner account.
+By default, the transaction will be split in half, but you can specify a different split by adding `@x%` for 
+percentage or `@x` for specific amount in the memo of the transaction. The amount you specify in this split will be 
+transferred to your sharing account. You can also create a plain transfer to the shared account which will be 
+completely allocated to the partner account.
 ### 2. Initialize and run the split functionality
 
 ```py
@@ -75,33 +75,33 @@ ynab_split_budget = YnabSplitBudget.from_yaml(path='path/to/config.yaml', user='
 ynab_split_budget.split_transactions()
 ```
 ### 3. Clear the newly split transaction
-Using the YNAB web interface go to your split account and clear the newly split transaction over there. 
-This can currently not be automated as YNAB API can't clear split transactions at this point in time.
+Using the YNAB web interface go to your split account and clear the newly split transaction over there. This can 
+currently not be automated as YNAB API can't clear split transactions at this point in time.
 ### 4. Run the insert functionality
-By default the library will compare and insert transactions of the last 30 days. If you would like to do it for a
+By default the library will compare and insert transactions of the last 30 days. If you would like to do it for a 
 different timeframe you can provide a `since` argument to the function with a value from `datetime.date`
 ```py
 ynab_split_budget.insert_complements()
 ```
 ## Advanced Usage
 ### Check Balances
-Additionally you can check if the cleared balances in both accounts match. If they don't match you will get back a
+Additionally you can check if the cleared balances in both accounts match. If they don't match you will get back a 
 `BalancesDontMatch` Error which also gives you the two values of the balances.
 ```py
 ynab_split_budget.raise_on_balances_off()
 ```
 ### Delete Orphaned Complements
-If you delete a transaction in your share account you can use this function to delete the respective complement on your
-partners shared account. It does return a list with the deleted transactions. By default the library will compare 
-transactions of the last 30 days. If you would like to do it for a different timeframe you can provide a `since` 
-argument to the function with a value from `datetime.date`
+If you delete a transaction in your share account you can use this function to delete the respective complement on 
+your partners shared account. It does return a list with the deleted transactions. By default the library will 
+compare transactions of the last 30 days. If you would like to do it for a different timeframe you can provide a 
+`since` argument to the function with a value from `datetime.date`
 ```py
 ynab_split_budget.delete_orphaned_complements()
 ```
 ### Show Logs
-The library logs information about the result of the methods on the 'INFO' level. If you want to see these logs import
-the logging module and set in to the level `INFO`. You can also access the logger for advanced configuration via the  
-`logger` attribute of your `YnabSplitBudget`instance.
+The library logs information about the result of the methods on the 'INFO' level. If you want to see these logs 
+import the logging module and set it to the level `INFO`. You can also access the logger for advanced configuration 
+via the `logger` attribute of your `YnabSplitBudget`instance.
 ```py
 import logging
 
@@ -114,6 +114,3 @@ $ python -m ynabsplitbudget -c <path/config.yaml#user_name> -s | --split-transac
 $ python -m ynabsplitbudget -c <path/config.yaml#user_name> -i | --insert-complements [-d | --since-date "YYYY-mm-dd"]
 $ python -m ynabsplitbudget -c <path/config.yaml#user_name> -b | --check-balances
 ```
-## Development
-
-Read the [CONTRIBUTING.md](CONTRIBUTING.md) file.
