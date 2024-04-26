@@ -2,6 +2,9 @@ import logging
 from datetime import date, timedelta, datetime
 from typing import List, Optional
 
+from ynabtransactionadjuster import Credentials
+
+from ynabsplitbudget.adjusters import ReconcileAdjuster
 from ynabsplitbudget.client import SplitClient, SyncClient
 from ynabsplitbudget.fileloader import FileLoader
 from ynabsplitbudget.models.exception import BalancesDontMatch
@@ -33,7 +36,8 @@ class YnabSplitBudget:
 		logging.getLogger(__name__).info(f'inserted {len(transactions)} complements into account of {self._partner.name}')
 		return len(transactions)
 
-	def split_transactions(self) -> int:
+	def split_transactions(self, set_cleared: bool = False) -> int:
+		"""Splits transactions """
 		c = SplitClient(self._user)
 		st_list = c.fetch_new_to_split()
 		[c.insert_split(st) for st in st_list]
@@ -57,6 +61,17 @@ class YnabSplitBudget:
 		logging.getLogger(__name__).info(f'deleted {len(orphaned_complements)} orphaned complements in account of {self._partner.name}')
 		logging.getLogger(__name__).info(orphaned_complements)
 		return orphaned_complements
+
+	def reconcile(self) -> int:
+		"""Reconciles cleared transactions in the current account
+		:return: count of reconciled transactions
+		"""
+		creds = Credentials(token=self._user.token, budget=self._user.account.budget_id,
+							account=self._user.account.account_id)
+		adjuster = ReconcileAdjuster.from_credentials(creds)
+		c = adjuster.run()
+		logging.getLogger(__name__).info(f'reconciled {c} transactions for {self._user.name}')
+		return c
 
 	@staticmethod
 	def _substitute_default_since(since: Optional[date]):
