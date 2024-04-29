@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from ynabtransactionadjuster import Credentials
 
-from ynabsplitbudget.adjusters import ReconcileAdjuster
+from ynabsplitbudget.adjusters import ReconcileAdjuster, SplitAdjuster
 from ynabsplitbudget.client import SplitClient, SyncClient
 from ynabsplitbudget.fileloader import FileLoader
 from ynabsplitbudget.models.exception import BalancesDontMatch
@@ -38,11 +38,13 @@ class YnabSplitBudget:
 
 	def split_transactions(self, set_cleared: bool = False) -> int:
 		"""Splits transactions """
-		c = SplitClient(self._user)
-		st_list = c.fetch_new_to_split()
-		[c.insert_split(st) for st in st_list]
-		logging.getLogger(__name__).info(f'split {len(st_list)} transactions for {self._user.name}')
-		return len(st_list)
+		creds = Credentials(token=self._user.token, budget=self._user.account.budget_id,
+							account=self._user.account.account_id)
+		s = SplitAdjuster(creds, flag_color=self._user.flag, transfer_payee_id=self._user.account.transfer_payee_id)
+		mod_trans = s.apply()
+		count = s.update(mod_trans)
+		logging.getLogger(__name__).info(f'split {count} transactions for {self._user.name}')
+		return count
 
 	def raise_on_balances_off(self):
 		repo = SyncRepository(user=self._user, partner=self._partner)
@@ -69,7 +71,7 @@ class YnabSplitBudget:
 		creds = Credentials(token=self._user.token, budget=self._user.account.budget_id,
 							account=self._user.account.account_id)
 		adjuster = ReconcileAdjuster.from_credentials(creds)
-		c = adjuster.run()
+		c = adjuster.dryrun()
 		logging.getLogger(__name__).info(f'reconciled {c} transactions for {self._user.name}')
 		return c
 

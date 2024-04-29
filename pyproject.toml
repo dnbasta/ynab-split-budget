@@ -20,7 +20,7 @@ classifiers = [
 python = '<4.0,>=3.8'
 pyyaml = '>=6.0'
 requests = '>=2.28'
-ynab-transaction-adjuster= '>=1.0.0'
+ynab-transaction-adjuster= '>=1.2.0'
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=8.0.0"

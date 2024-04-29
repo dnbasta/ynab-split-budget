@@ -17,10 +17,28 @@ class ReconcileAdjuster(Adjuster):
 		return modifier
 
 
+class ClearAdjuster(Adjuster):
+
+	def __init__(self, credentials: Credentials, flag_color: str):
+		super().__init__(credentials=credentials)
+		self.flag_color = flag_color
+
+	def filter(self, transactions: List[Transaction]) -> List[Transaction]:
+		return [t for t in transactions
+					 	if t.cleared == 'uncleared'
+						and t.transfer_transaction_id
+						and self.fetch_transaction(t.transfer_transaction_id).flag_color == self.flag_color]
+
+	def adjust(self, original: Transaction, modifier: Modifier) -> Modifier:
+		modifier.cleared = 'cleared'
+		modifier.category = self.categories.fetch_by_name('Inflow: Ready to Assign')
+		return modifier
+
+
 class SplitAdjuster(Adjuster):
 
 	def __init__(self, credentials: Credentials, flag_color: str, transfer_payee_id: str):
-		super().from_credentials(credentials=credentials)
+		super().__init__(credentials=credentials)
 		self.flag_color = flag_color
 		self.transfer_payee_id = transfer_payee_id
 
