@@ -5,7 +5,7 @@ from typing import List, Optional
 from ynabtransactionadjuster import Credentials
 
 from ynabsplitbudget.adjusters import ReconcileAdjuster, SplitAdjuster
-from ynabsplitbudget.client import SplitClient, SyncClient
+from ynabsplitbudget.client import SyncClient
 from ynabsplitbudget.fileloader import FileLoader
 from ynabsplitbudget.models.exception import BalancesDontMatch
 from ynabsplitbudget.models.transaction import ComplementTransaction

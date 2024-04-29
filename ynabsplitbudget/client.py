@@ -5,8 +5,7 @@ from typing import List, Union
 import requests
 from requests import HTTPError
 
-from ynabsplitbudget.models.splittransaction import SplitTransaction
-from ynabsplitbudget.transactionbuilder import TransactionBuilder, SplitTransactionBuilder
+from ynabsplitbudget.transactionbuilder import TransactionBuilder
 from ynabsplitbudget.models.exception import BudgetNotFound, AccountNotFound
 from ynabsplitbudget.models.account import Account
 from ynabsplitbudget.models.transaction import RootTransaction, LookupTransaction, ComplementTransaction
@@ -116,39 +115,4 @@ class SyncClient(ClientMixin):
 	def delete_complement(self, transaction_id: str) -> None:
 		url = f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/transactions/{transaction_id}'
 		r = requests.delete(url, headers=self._header())
-		r.raise_for_status()
-
-
-class SplitClient(ClientMixin):
-
-	def __init__(self, user: User):
-		self._token = user.token
-		self.user = user
-
-	def fetch_new_to_split(self) -> List[SplitTransaction]:
-		url = f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/transactions'
-
-		data_dict = self._get(url)
-		transactions_dicts = [t for t in data_dict['transactions'] if not t['cleared'] == 'uncleared'
-							  and t['deleted'] is False and len(t['subtransactions']) == 0]
-		stb = SplitTransactionBuilder()
-		flag_splits = [stb.build(t) for t in transactions_dicts if t['flag_color'] == self.user.flag]
-
-		return [s for s in flag_splits if s is not None]
-
-	def insert_split(self, t: SplitTransaction):
-		data = {'transaction': {
-			"subtransactions": [{"amount": int(round(t.split_amount)),
-								 "payee_id": self.user.account.transfer_payee_id,
-								 "memo": t.memo,
-								 "cleared": "cleared"
-								},
-								{"amount": int(t.amount - round(t.split_amount)),
-								 "category_id": t.category.id,
-								 "cleared": "cleared"
-								 }]
-		}}
-		url = f'{YNAB_BASE_URL}budgets/{self.user.account.budget_id}/transactions/{t.id}'
-
-		r = requests.put(url, json=data, headers=self._header())
 		r.raise_for_status()

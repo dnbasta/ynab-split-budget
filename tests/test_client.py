@@ -4,13 +4,10 @@ from unittest.mock import patch, MagicMock, ANY
 import pytest
 from requests import Response
 
-from ynabsplitbudget.client import BaseClient, SyncClient, SplitClient
+from ynabsplitbudget.client import BaseClient, SyncClient
 from ynabsplitbudget.models.account import Account
-from ynabsplitbudget.models.exception import BudgetNotFound, AccountNotFound, SplitNotValid
-from ynabsplitbudget.models.splittransaction import SplitTransaction
+from ynabsplitbudget.models.exception import BudgetNotFound, AccountNotFound
 from ynabsplitbudget.models.transaction import RootTransaction, LookupTransaction
-from ynabsplitbudget.models.user import User
-from ynabsplitbudget.transactionbuilder import SplitParser, SplitTransactionBuilder
 
 
 @pytest.mark.parametrize('budget, account, expected', [('bullshit', 'bullshit', BudgetNotFound),
@@ -85,26 +82,6 @@ def test_fetch_new_empty(mock_response, mock_transaction_dict):
 
 	# Assert
 	assert len(r) == 0
-
-
-@patch('ynabsplitbudget.client.requests.get')
-def test_fetch_new_to_split_flag(mock_response, mock_transaction_dict):
-	# Arrange
-	mock_resp_obj = MagicMock(spec=Response)
-	mock_resp_obj.json.return_value = {'data': {'transactions': [mock_transaction_dict]}}
-	mock_response.return_value = mock_resp_obj
-
-	u = User(name='user_name', flag='purple',
-			 token='sample_token',
-			 account=MagicMock())
-	c = SplitClient(u)
-
-	# Act
-	st = c.fetch_new_to_split()
-
-	# Assert
-	assert isinstance(st[0], SplitTransaction)
-	assert st[0].split_amount == 500
 
 
 @patch('ynabsplitbudget.client.requests.get')
