@@ -1,11 +1,9 @@
 import hashlib
-import logging
 import re
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Union, Optional
+from typing import Union
 
-from ynabsplitbudget.models.exception import SplitNotValid
 from ynabsplitbudget.models.transaction import RootTransaction, ComplementTransaction, LookupTransaction
 from ynabsplitbudget.models.user import User
 
