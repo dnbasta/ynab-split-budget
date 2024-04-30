@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from ynabtransactionadjuster import Credentials
 
-from ynabsplitbudget.adjusters import ReconcileAdjuster, SplitAdjuster
+from ynabsplitbudget.adjusters import ReconcileAdjuster, SplitAdjuster, ClearAdjuster
 from ynabsplitbudget.client import SyncClient
 from ynabsplitbudget.fileloader import FileLoader
 from ynabsplitbudget.models.exception import BalancesDontMatch
@@ -36,15 +36,26 @@ class YnabSplitBudget:
 		logging.getLogger(__name__).info(f'inserted {len(transactions)} complements into account of {self._partner.name}')
 		return len(transactions)
 
-	def split_transactions(self, set_cleared: bool = False) -> int:
+	def split_transactions(self, clear_splits: bool = False) -> int:
 		"""Splits transactions """
-		creds = Credentials(token=self._user.token, budget=self._user.account.budget_id,
-							account=self._user.account.account_id)
-		s = SplitAdjuster(creds, flag_color=self._user.flag, transfer_payee_id=self._user.account.transfer_payee_id)
+		creds = Credentials(token=self._user.token, budget=self._user.account.budget_id)
+		s = SplitAdjuster(creds, flag_color=self._user.flag, transfer_payee_id=self._user.account.transfer_payee_id,
+						  account_id=self._user.account.account_id)
 		mod_trans = s.apply()
-		count = s.update(mod_trans)
-		logging.getLogger(__name__).info(f'split {count} transactions for {self._user.name}')
-		return count
+		updated_transactions = s.update(mod_trans)
+		logging.getLogger(__name__).info(f'split {len(updated_transactions)} transactions for {self._user.name}')
+
+		if clear_splits:
+			transfer_transaction_ids = [st.transfer_transaction_id for t in updated_transactions for st in
+										t.subtransactions if st.transfer_transaction_id]
+			creds = Credentials(token=self._user.token, budget=self._user.account.budget_id,
+								account=self._user.account.account_id)
+			ca = ClearAdjuster(creds, split_transaction_ids=transfer_transaction_ids)
+			mod_trans_clear = ca.apply()
+			count_clear = len(s.update(mod_trans_clear))
+			logging.getLogger(__name__).info(f'cleared {count_clear} transactions for {self._user.name}')
+
+		return len(updated_transactions)
 
 	def raise_on_balances_off(self):
 		repo = SyncRepository(user=self._user, partner=self._partner)

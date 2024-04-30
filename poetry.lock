@@ -546,13 +546,13 @@ files = [
 
 [[package]]
 name = "ynab-transaction-adjuster"
-version = "1.2.0"
+version = "2.0.0"
 description = "Library to adjust transactions in YNAB based on custom patterns"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "ynab_transaction_adjuster-1.2.0-py3-none-any.whl", hash = "sha256:544e4ddb72be5caca1364538b541555a23e323b3baa8f7234cddad70ddd671be"},
-    {file = "ynab_transaction_adjuster-1.2.0.tar.gz", hash = "sha256:d51786b811412cd5420a07c297011819bbb56835dda0d362a4220f5d62fb8786"},
+    {file = "ynab_transaction_adjuster-2.0.0-py3-none-any.whl", hash = "sha256:ae8a13f870a57aeb58140ca502261ccf1a91307d63f15cccc064070ed556c330"},
+    {file = "ynab_transaction_adjuster-2.0.0.tar.gz", hash = "sha256:9047fdd08658abe27cfe6060a9660b8dbdca96c232c101ffe73a9baa65d6f824"},
 ]
 
 [package.dependencies]
@@ -564,4 +564,4 @@ requests = ">=2.28.0,<3.0.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "<4.0,>=3.8"
-content-hash = "c8a77aa99105c873341788bb8a0e7baf6df6368a17244ec172b903d6c4cc0510"
+content-hash = "717e041e3d2d3abef49fe992966d8d5bb1709e7fad725f05e78240c61ee448e3"

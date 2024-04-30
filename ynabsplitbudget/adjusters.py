@@ -19,15 +19,14 @@ class ReconcileAdjuster(Adjuster):
 
 class ClearAdjuster(Adjuster):
 
-	def __init__(self, credentials: Credentials, flag_color: str):
+	def __init__(self, credentials: Credentials, split_transaction_ids: List[str]):
 		super().__init__(credentials=credentials)
-		self.flag_color = flag_color
+		self.split_transaction_ids = split_transaction_ids
 
 	def filter(self, transactions: List[Transaction]) -> List[Transaction]:
 		return [t for t in transactions
 					 	if t.cleared == 'uncleared'
-						and t.transfer_transaction_id
-						and self.fetch_transaction(t.transfer_transaction_id).flag_color == self.flag_color]
+						and t.id in self.split_transaction_ids]
 
 	def adjust(self, original: Transaction, modifier: Modifier) -> Modifier:
 		modifier.cleared = 'cleared'
@@ -37,13 +36,15 @@ class ClearAdjuster(Adjuster):
 
 class SplitAdjuster(Adjuster):
 
-	def __init__(self, credentials: Credentials, flag_color: str, transfer_payee_id: str):
+	def __init__(self, credentials: Credentials, flag_color: str, transfer_payee_id: str, account_id: str):
 		super().__init__(credentials=credentials)
 		self.flag_color = flag_color
 		self.transfer_payee_id = transfer_payee_id
+		self.account_id = account_id
 
 	def filter(self, transactions: List[Transaction]) -> List[Transaction]:
-		return [t for t in transactions if t.cleared == 'cleared' and t.flag_color == self.flag_color]
+		return [t for t in transactions if t.cleared == 'cleared' and t.flag_color == self.flag_color
+				and not t.subtransactions and not t.account.id == self.account_id]
 
 	def adjust(self, original: Transaction, modifier: Modifier) -> Modifier:
 		split_amount = SplitParser().parse_split(transaction=original)
