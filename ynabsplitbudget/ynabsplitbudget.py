@@ -1,13 +1,13 @@
 import logging
 from datetime import date, timedelta, datetime
+from pathlib import Path
 from typing import List, Optional
 
+import yaml
 from ynabtransactionadjuster import Credentials
 
 from ynabsplitbudget.adjusters import ReconcileAdjuster, SplitAdjuster, ClearAdjuster
 from ynabsplitbudget.client import Client
-from ynabsplitbudget.fileloader import FileLoader
-from ynabsplitbudget.models.config import Config
 from ynabsplitbudget.models.exception import BalancesDontMatch
 from ynabsplitbudget.models.transaction import ComplementTransaction
 from ynabsplitbudget.models.user import User
@@ -34,9 +34,12 @@ class YnabSplitBudget:
 
 		:returns: instance of YnabSplitBudget class
 		"""
-		config_dict = FileLoader(path).load()
-		config = Config.from_dict(config_dict)
-		return cls(user=config.user, partner=config.partner)
+		with Path(path).open(mode='r') as f:
+			config_dict = yaml.safe_load(f)
+
+		user = User.from_dict(config_dict['user'])
+		partner = User.from_dict(config_dict['partner'])
+		return cls(user=user, partner=partner)
 
 	def push(self, since: date = None) -> int:
 		"""Pushes transactions from user split account to partner split account. By default, considers transactions of
