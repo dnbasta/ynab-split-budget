@@ -2,6 +2,7 @@
 
 [![GitHub Release](https://img.shields.io/github/release/dnbasta/ynab-split-budget?style=flat)]() 
 [![Github Release](https://img.shields.io/maintenance/yes/2100)]()
+[![Monthly downloads](https://img.shields.io/pypi/dm/ynab-split-budget)]()
 
 This library enables cost sharing across two YNAB budgets. It requires two dedicated accounts in each budget to which
 each budget owner can transfer amounts from their own budget. Each transfer is considered as its opposite in the other 
@@ -62,8 +63,7 @@ By default, the transaction will be split in half, but you can specify a differe
 percentage or `@x` for specific amount in the memo of the transaction. The amount you specify in this split will be 
 transferred to your sharing account. You can also create a plain transfer to the shared account which will be 
 completely allocated to the partner account.
-### 2. Initialize and run the split functionality
-
+### 2. Initialize library
 ```py
 from ynabsplitbudget import YnabSplitBudget
 
@@ -72,36 +72,44 @@ ynab_split_budget = YnabSplitBudget(config=CONFIG, user='<user_name>')
 # or alternatively from yaml
 ynab_split_budget = YnabSplitBudget.from_yaml(path='path/to/config.yaml', user='<user_name')
 
-ynab_split_budget.split_transactions()
 ```
-### 3. Clear the newly split transaction
-Using the YNAB web interface go to your split account and clear the newly split transaction over there. This can 
-currently not be automated as YNAB API can't clear split transactions at this point in time.
-### 4. Run the insert functionality
-By default the library will compare and insert transactions of the last 30 days. If you would like to do it for a 
-different timeframe you can provide a `since` argument to the function with a value from `datetime.date`
+### 3. Split transactions
+Call the `split()` method of the instance. It will split flagged transactions in the budget into a subtransaction with
+the original category and a transfer to the split account. By default, the transfer transactions will show up as 
+uncleared in the split account. The optional `clear_split` parameter allows to automatically clear the transactions in 
+the split account. The function returns the count of split transactions.
 ```py
-ynab_split_budget.insert_complements()
+ynab_split_budget.split()
+```
+
+### 4. Push new splits to partner split account
+Calling the `push()` function will insert new transactions from user split account into split account of partner to keep
+both accounts in sync. By default, the function will compare and insert transactions of the last 30 days. Optionally it 
+takes a `since` parameter in the form of `datetime.date` to set a timeframe different from 30 days. 
+
+```py
+ynab_split_budget.push()
 ```
 ## Advanced Usage
 ### Check Balances
-Additionally you can check if the cleared balances in both accounts match. If they don't match you will get back a 
-`BalancesDontMatch` Error which also gives you the two values of the balances.
+The `raise_on_balances_off()` function compares the cleared balances in both split accounts. If they don't match it 
+will raise a `BalancesDontMatch` error which includes the values of the balances.
 ```py
 ynab_split_budget.raise_on_balances_off()
 ```
 ### Delete Orphaned Complements
-If you delete a transaction in your share account you can use this function to delete the respective complement on 
-your partners shared account. It does return a list with the deleted transactions. By default the library will 
-compare transactions of the last 30 days. If you would like to do it for a different timeframe you can provide a 
-`since` argument to the function with a value from `datetime.date`
+The `delete_orphans()` function deletes orphaned transactions in the partner split account, which don't have a 
+corresponding transaction in the user split account any more. It does return a list with the deleted transactions. 
+By default, the function compares transactions of the last 30 days. Optionally it takes a `since` parameter in the 
+form of `datetime.date` to set a timeframe different from 30 days.
+
 ```py
-ynab_split_budget.delete_orphaned_complements()
+ynab_split_budget.delete_orphans()
 ```
 ### Show Logs
-The library logs information about the result of the methods on the 'INFO' level. If you want to see these logs 
-import the logging module and set it to the level `INFO`. You can also access the logger for advanced configuration 
-via the `logger` attribute of your `YnabSplitBudget`instance.
+The library logs information about the result of the methods at the 'INFO' level. The logs can be made visible by 
+importing the logging module and set it to the level `INFO`. The logger itself can also be accessed via the `logger` 
+attribute of the instance.
 ```py
 import logging
 

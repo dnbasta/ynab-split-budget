@@ -36,13 +36,13 @@ if __name__ == '__main__':
 	ysb = YnabSplitBudget.from_yaml(path=path, user=user_name)
 
 	if args.split_transactions:
-		ysb.split_transactions()
+		ysb.split()
 	if args.insert_complements:
 		if args.since_date:
 			since = datetime.strptime(args.since_date, "%Y-%m-%d")
 		else:
 			since = None
-		ysb.insert_complements(since=since)
+		ysb.push(since=since)
 	if args.check_balances:
 		ysb.raise_on_balances_off()
 
