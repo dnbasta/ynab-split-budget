@@ -49,4 +49,7 @@ class User:
 		with Path(path).open(mode='r') as f:
 			config_dict = yaml.safe_load(f)
 
-		return cls.from_dict(config_dict)
+		try:
+			return cls.from_dict(config_dict)
+		except KeyError as e:
+			raise ValueError(f'Could not load config from YAML file: {path}') from e
