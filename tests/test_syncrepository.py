@@ -5,8 +5,8 @@ from ynabsplitbudget.models.transaction import RootTransaction, ComplementTransa
 from ynabsplitbudget.syncrepository import SyncRepository
 
 
-@patch('ynabsplitbudget.client.SyncClient.fetch_roots')
-@patch('ynabsplitbudget.client.SyncClient.fetch_lookup')
+@patch('ynabsplitbudget.client.Client.fetch_roots')
+@patch('ynabsplitbudget.client.Client.fetch_lookup')
 def test_fetch_new_to_insert_new(mock_lookup, mock_changed):
 	# Arrange
 	mock_transaction = MagicMock(spec=RootTransaction, transaction_date=date(2023, 10, 1), id='id',
@@ -21,8 +21,8 @@ def test_fetch_new_to_insert_new(mock_lookup, mock_changed):
 	assert isinstance(t[0], RootTransaction)
 
 
-@patch('ynabsplitbudget.client.SyncClient.fetch_roots')
-@patch('ynabsplitbudget.client.SyncClient.fetch_lookup')
+@patch('ynabsplitbudget.client.Client.fetch_roots')
+@patch('ynabsplitbudget.client.Client.fetch_lookup')
 def test_fetch_new_to_insert_not_new(mock_lookup, mock_changed):
 	# Arrange
 	mock_transaction = MagicMock(spec=RootTransaction, transaction_date=date(2023, 10, 1), id='id',
@@ -37,8 +37,8 @@ def test_fetch_new_to_insert_not_new(mock_lookup, mock_changed):
 	assert len(t) == 0
 
 
-@patch('ynabsplitbudget.client.SyncClient.fetch_roots')
-@patch('ynabsplitbudget.client.SyncClient.fetch_lookup')
+@patch('ynabsplitbudget.client.Client.fetch_roots')
+@patch('ynabsplitbudget.client.Client.fetch_lookup')
 def test_fetch_new_to_insert_empty(mock_lookup, mock_changed):
 	# Arrange
 	mock_changed.return_value = []
