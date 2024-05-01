@@ -4,6 +4,7 @@ import warnings
 import logging
 from datetime import datetime
 
+from ynabsplitbudget import User
 from ynabsplitbudget.ynabsplitbudget import YnabSplitBudget
 
 logging.basicConfig(level=logging.INFO)
@@ -14,36 +15,56 @@ def custom_warn(message, category, filename, lineno, file=None, line=None):
 
 
 if __name__ == '__main__':
-	# execute only if run as the entry point into the program
-
 	parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-									 usage='ynabsplitaccount [-c | --config] <path/file.yaml#user> '
-										   '[-s | --split-transactions] [-i | --insert-complements] '
-										   '[-d | --since-date "YYYY-mm-dd"]')
-	parser.add_argument("-c", "--config", type=str, help="path of config YAML to use and user", required=True)
-	parser.add_argument("-s", "--split-transactions", action="store_true",
+									 usage='ynabsplitbudget [-u | --user] <path/user.yaml> '
+										   '[-p | --partner] <path/partner.yaml> '
+										   '[-s | --split] '
+										   '[-i | --push] '
+										   '[-b | --balances]'
+										   '[-d | --delete-orphans]'
+										   '[-r | --reconcile]'
+										   '[--since "YYYY-mm-dd"]')
+	parser.add_argument("-u", "--user", type=str, required=True,
+						help="path of config YAML to use for user")
+	parser.add_argument("-p", "--partner", type=str, required=True,
+						help="path of config YAML to use for partner")
+	parser.add_argument("-s", "--split", action="store_true",
 						help="split transactions from account")
-	parser.add_argument("-i", "--insert-complements", action="store_true",
-						help="fetch new transactions from both accounts and insert complements")
-	parser.add_argument("-b", "--check-balances", action="store_true",
+	parser.add_argument("-i", "--push", action="store_true",
+						help="push split transactions to partner account")
+	parser.add_argument("-b", "--balances", action="store_true",
 						help="raise error if balances of the two accounts don't match")
-	parser.add_argument("-d", "--since-date", action="store_true",
-						help='provide date since which insert function should compare transactions in the format of "YYYY-mm-dd"')
+	parser.add_argument("-d", "--delete-orphans", action="store_true",
+						help="deletes orphaned transactions in partner account")
+	parser.add_argument("-r", "--reconcile", action="store_true",
+						help="reconciles account if balance matches with partner account")
+	parser.add_argument("--since", type=str,
+						help='provide optional date if library should use something else than 30 days default')
+
 	args = parser.parse_args()
 
 	warnings.showwarning = custom_warn
-	path, user_name = args.config.split('#')
-	ysb = YnabSplitBudget.from_yaml(path=path, user=user_name)
+	user = User.from_yaml(args.user)
+	partner = User.from_yaml(args.partner)
+	ysb = YnabSplitBudget(user=user, partner=partner)
 
-	if args.split_transactions:
+	if args.since:
+		try:
+			since = datetime.strptime(args.since, "%Y-%m-%d")
+		except ValueError as e:
+			raise ValueError(f"Incorrect date format {args.since}, should be YYYY-mm-dd") from e
+	else:
+		since = None
+
+	if args.split:
 		ysb.split()
-	if args.insert_complements:
-		if args.since_date:
-			since = datetime.strptime(args.since_date, "%Y-%m-%d")
-		else:
-			since = None
+	if args.push:
 		ysb.push(since=since)
-	if args.check_balances:
+	if args.delete_orphans:
+		ysb.delete_orphans(since=since)
+	if args.balances or args.reconcile:
 		ysb.raise_on_balances_off()
+	if args.reconcile:
+		ysb.reconcile()
 
 

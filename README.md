@@ -85,9 +85,11 @@ import logging
 logging.basicConfig(level='INFO')
 ```
 ### Run via bash commands
-You can run this package also from bash with the following commands
+You can run this library also from bash with the following basic structure
 ```bash
-$ python -m ynabsplitbudget -c <path/config.yaml#user_name> -s | --split-transactions
-$ python -m ynabsplitbudget -c <path/config.yaml#user_name> -i | --insert-complements [-d | --since-date "YYYY-mm-dd"]
-$ python -m ynabsplitbudget -c <path/config.yaml#user_name> -b | --check-balances
+$ python -m ynabsplitbudget -u <path/user.yaml> -p <path/partner.yaml> --split
+```
+For a complete list of available bash options please use
+```bash
+$ python -m ynabsplitbudget -h | -- help
 ```
