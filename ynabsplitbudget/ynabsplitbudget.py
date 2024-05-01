@@ -26,21 +26,6 @@ class YnabSplitBudget:
 		self.partner = partner
 		self.logger = self._set_up_logger()
 
-	@classmethod
-	def from_yaml(cls, path: str) -> 'YnabSplitBudget':
-		"""Create instance by loading config from YAML file
-
-		:param path: Path to the YAML file
-
-		:returns: instance of YnabSplitBudget class
-		"""
-		with Path(path).open(mode='r') as f:
-			config_dict = yaml.safe_load(f)
-
-		user = User.from_dict(config_dict['user'])
-		partner = User.from_dict(config_dict['partner'])
-		return cls(user=user, partner=partner)
-
 	def push(self, since: date = None) -> int:
 		"""Pushes transactions from user split account to partner split account. By default, considers transactions of
 		last 30 days.

@@ -1,5 +1,8 @@
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Literal
+
+import yaml
 
 from ynabsplitbudget.client import Client
 from ynabsplitbudget.models.account import Account
@@ -34,3 +37,16 @@ class User:
 		"""Creates user object from dict"""
 		return cls(name=data['name'], token=data['token'], budget_id=data['budget_id'], account_id=data['account_id'],
 				   flag_color=data['flag_color'])
+
+	@classmethod
+	def from_yaml(cls, path: str) -> 'User':
+		"""Create instance by loading config from YAML file
+
+		:param path: Path to the YAML file
+
+		:returns: instance of YnabSplitBudget class
+		"""
+		with Path(path).open(mode='r') as f:
+			config_dict = yaml.safe_load(f)
+
+		return cls.from_dict(config_dict)
