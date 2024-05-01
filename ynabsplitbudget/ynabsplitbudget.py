@@ -7,32 +7,36 @@ from ynabtransactionadjuster import Credentials
 from ynabsplitbudget.adjusters import ReconcileAdjuster, SplitAdjuster, ClearAdjuster
 from ynabsplitbudget.client import SyncClient
 from ynabsplitbudget.fileloader import FileLoader
+from ynabsplitbudget.models.config import Config
 from ynabsplitbudget.models.exception import BalancesDontMatch
 from ynabsplitbudget.models.transaction import ComplementTransaction
+from ynabsplitbudget.models.user import User
 from ynabsplitbudget.syncrepository import SyncRepository
-from ynabsplitbudget.userloader import UserLoader
 
 
 class YnabSplitBudget:
+	"""Interface to YNAB Split Budget.
 
-	def __init__(self, config: dict, user: str):
+	:ivar user: User to use for instance
+	:ivar partner: Partner to use for instance
+	:ivar logger: Logger of the instance
+	"""
+	def __init__(self, user: User, partner: User):
+		self.user = user
+		self.partner = partner
 		self.logger = self._set_up_logger()
 
-		userloader = UserLoader(config_dict=config)
-		self._user = userloader.load(user)
-		self._partner = userloader.load_partner(user)
-
 	@classmethod
-	def from_yaml(cls, path: str, user: str) -> 'YnabSplitBudget':
+	def from_yaml(cls, path: str) -> 'YnabSplitBudget':
 		"""Create instance by loading config from YAML file
 
 		:param path: Path to the YAML file
-		:param user: User for which to create the instance
 
 		:returns: instance of YnabSplitBudget class
 		"""
 		config_dict = FileLoader(path).load()
-		return cls(config=config_dict, user=user)
+		config = Config.from_dict(config_dict)
+		return cls(user=config.user, partner=config.partner)
 
 	def push(self, since: date = None) -> int:
 		"""Pushes transactions from user split account to partner split account. By default, considers transactions of
@@ -41,11 +45,11 @@ class YnabSplitBudget:
 		:param since: If set to date, will push transactions from that date onwards instead of default 30 days
 		"""
 		since = self._substitute_default_since(since)
-		repo = SyncRepository(user=self._user, partner=self._partner)
+		repo = SyncRepository(user=self.user, partner=self.partner)
 		transactions = repo.fetch_roots_wo_complement(since=since)
 
 		repo.insert_complements(transactions)
-		logging.getLogger(__name__).info(f'inserted {len(transactions)} complements into account of {self._partner.name}')
+		logging.getLogger(__name__).info(f'inserted {len(transactions)} complements into account of {self.partner.name}')
 		return len(transactions)
 
 	def split(self, clear_splits: bool = False) -> int:
@@ -55,22 +59,22 @@ class YnabSplitBudget:
 		:param clear_splits: If set to true transactions in split account will automatically be set to cleared
 		:return: count of split transactions
 		"""
-		creds = Credentials(token=self._user.token, budget=self._user.account.budget_id)
-		s = SplitAdjuster(creds, flag_color=self._user.flag, transfer_payee_id=self._user.account.transfer_payee_id,
-						  account_id=self._user.account.account_id)
+		creds = Credentials(token=self.user.token, budget=self.user.budget_id)
+		s = SplitAdjuster(creds, flag_color=self.user.flag_color, transfer_payee_id=self.user.fetch_account().transfer_payee_id,
+						  account_id=self.user.account_id)
 		mod_trans = s.apply()
 		updated_transactions = s.update(mod_trans)
-		logging.getLogger(__name__).info(f'split {len(updated_transactions)} transactions for {self._user.name}')
+		logging.getLogger(__name__).info(f'split {len(updated_transactions)} transactions for {self.user.name}')
 
 		if clear_splits:
 			transfer_transaction_ids = [st.transfer_transaction_id for t in updated_transactions for st in
 										t.subtransactions if st.transfer_transaction_id]
-			creds = Credentials(token=self._user.token, budget=self._user.account.budget_id,
-								account=self._user.account.account_id)
+			creds = Credentials(token=self.user.token, budget=self.user.budget_id,
+								account=self.user.account_id)
 			ca = ClearAdjuster(creds, split_transaction_ids=transfer_transaction_ids)
 			mod_trans_clear = ca.apply()
 			count_clear = len(s.update(mod_trans_clear))
-			logging.getLogger(__name__).info(f'cleared {count_clear} transactions for {self._user.name}')
+			logging.getLogger(__name__).info(f'cleared {count_clear} transactions for {self.user.name}')
 
 		return len(updated_transactions)
 
@@ -79,12 +83,12 @@ class YnabSplitBudget:
 
 		:raises BalancesDontMatch: if cleared amounts in both accounts don't match
 		"""
-		repo = SyncRepository(user=self._user, partner=self._partner)
+		repo = SyncRepository(user=self.user, partner=self.partner)
 		user_balance, partner_balance = repo.fetch_balances()
 		if user_balance + partner_balance != 0:
-			raise BalancesDontMatch({'user': {'name': self._user.name,
+			raise BalancesDontMatch({'user': {'name': self.user.name,
 											  'balance': user_balance},
-									 'partner': {'name': self._partner.name,
+									 'partner': {'name': self.partner.name,
 												 'balance': partner_balance}})
 
 	def delete_orphans(self, since: date = None) -> List[ComplementTransaction]:
@@ -93,10 +97,10 @@ class YnabSplitBudget:
 		:param since: if set to date will delete orphaned transactions from that date onwards instead of default 30 days
 		"""
 		since = self._substitute_default_since(since)
-		orphaned_complements = SyncRepository(user=self._user, partner=self._partner).find_orphaned_partner_complements(since)
-		c = SyncClient(self._partner)
+		orphaned_complements = SyncRepository(user=self.user, partner=self.partner).find_orphaned_partner_complements(since)
+		c = SyncClient(self.partner)
 		[c.delete_complement(oc.id) for oc in orphaned_complements]
-		logging.getLogger(__name__).info(f'deleted {len(orphaned_complements)} orphaned complements in account of {self._partner.name}')
+		logging.getLogger(__name__).info(f'deleted {len(orphaned_complements)} orphaned complements in account of {self.partner.name}')
 		logging.getLogger(__name__).info(orphaned_complements)
 		return orphaned_complements
 
@@ -105,12 +109,12 @@ class YnabSplitBudget:
 
 		:returns: count of reconciled transactions
 		"""
-		creds = Credentials(token=self._user.token, budget=self._user.account.budget_id,
-							account=self._user.account.account_id)
+		creds = Credentials(token=self.user.token, budget=self.user.budget_id,
+							account=self.user.account_id)
 		ra = ReconcileAdjuster(creds)
 		mod_trans = ra.apply()
 		updated_trans = ra.update(mod_trans)
-		logging.getLogger(__name__).info(f'reconciled {len(updated_trans)} transactions for {self._user.name}')
+		logging.getLogger(__name__).info(f'reconciled {len(updated_trans)} transactions for {self.user.name}')
 		return len(updated_trans)
 
 	@staticmethod
