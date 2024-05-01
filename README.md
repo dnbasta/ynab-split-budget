@@ -19,59 +19,28 @@ account.
 ```bash
 pip install ynab-split-budget
 ```
+## Usage
+### 1. Create a transaction
+Create a transaction in the budget and add a specific flag in a specific color to be used for the splits. The 
+transaction needs to be cleared in order to be considered by this library. By default, the transaction will be split 
+in half, but you can specify a different split by adding `@x%` for percentage or `@x` for specific amount in the memo 
+of the transaction. The amount you specify in this split will be transferred to your sharing account. You can also 
+create a plain transfer to the shared account which will be completely allocated to the partner account.
 
-## Create config
-Create a config `dict` with the below structure. 
-```py
-CONFIG = {
-    '<user_name>': {
-        'budget': '<budget_id>',
-        'account': '<account_id>',
-        'token': '<ynab_token>',
-        'flag': '<color>'},
-    '<partner_name>': {
-        'budget': '<budget_id>',
-        'account': '<account_id>',
-        'token': '<ynab_token>',
-        'flag': '<color>'}
-}
-```
+### 2. Initialize library
 You can find the ID of the budget and of the account if you go to https://app.ynab.com/ and open the target account by
 clicking on the name on the left hand side menu. The URL does now contain both IDs 
 `https://app.ynab.com/<budget_id>/accounts/<account_id>`
 Possible colors for the flag value are `red`, `orange`, `yellow`, `green`, `blue` and `purple`
-
-Alternatively you can save the config in a yaml file with the below structure and provide the path to the library 
-when initializing
-```yaml
-<user_name>:
-  token: <ynab_token>
-  budget: <budget_id>
-  account: <account_id>
-  flag: <color>
-<partner_name>:
-  token: <ynab_token>
-  budget: <budget_id>
-  account: <account_id>
-  flag: <color>
-```
-
-## Usage
-### 1. Create a transaction
-Create a transaction in your budget and add the defined color flag. Only cleared transactions will be considered. 
-By default, the transaction will be split in half, but you can specify a different split by adding `@x%` for 
-percentage or `@x` for specific amount in the memo of the transaction. The amount you specify in this split will be 
-transferred to your sharing account. You can also create a plain transfer to the shared account which will be 
-completely allocated to the partner account.
-### 2. Initialize library
 ```py
-from ynabsplitbudget import YnabSplitBudget
+from ynabsplitbudget import YnabSplitBudget, User
 
-# initialize from config dict
-ynab_split_budget = YnabSplitBudget(config=CONFIG, user='<user_name>')
-# or alternatively from yaml
-ynab_split_budget = YnabSplitBudget.from_yaml(path='path/to/config.yaml', user='<user_name')
+user = User(name='<name>', token='<token>', budget_id='<budget_id>', account_id='<account_id', 
+            flag_color='<flag_color>')
+partner = User(name='<name>', token='<token>', budget_id='<budget_id>', account_id='<account_id', 
+            flag_color='<flag_color>')
 
+ynab_split_budget = YnabSplitBudget(partner=partner)
 ```
 ### 3. Split transactions
 Call the `split()` method of the instance. It will split flagged transactions in the budget into a subtransaction with
