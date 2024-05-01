@@ -5,7 +5,7 @@ from typing import List, Optional
 from ynabtransactionadjuster import Credentials
 
 from ynabsplitbudget.adjusters import ReconcileAdjuster, SplitAdjuster, ClearAdjuster
-from ynabsplitbudget.syncclient import SyncClient
+from ynabsplitbudget.client import Client
 from ynabsplitbudget.fileloader import FileLoader
 from ynabsplitbudget.models.config import Config
 from ynabsplitbudget.models.exception import BalancesDontMatch
@@ -98,7 +98,7 @@ class YnabSplitBudget:
 		"""
 		since = self._substitute_default_since(since)
 		orphaned_complements = SyncRepository(user=self.user, partner=self.partner).find_orphaned_partner_complements(since)
-		c = SyncClient(self.partner)
+		c = Client(self.partner)
 		[c.delete_complement(oc.id) for oc in orphaned_complements]
 		logging.getLogger(__name__).info(f'deleted {len(orphaned_complements)} orphaned complements in account of {self.partner.name}')
 		logging.getLogger(__name__).info(orphaned_complements)

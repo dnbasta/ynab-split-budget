@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Literal
 
-from ynabsplitbudget.baseclient import BaseClient
+from ynabsplitbudget.client import Client
 from ynabsplitbudget.models.account import Account
 
 
@@ -26,7 +26,7 @@ class User:
 
 		:return: Account object with budget and account name, transfer_payee_id and currency
 		"""
-		client = BaseClient(token=self.token, user_name=self.name)
+		client = Client(token=self.token, user_name=self.name, budget_id=self.budget_id, account_id=self.account_id)
 		return client.fetch_account(budget_id=self.budget_id, account_id=self.account_id)
 
 	@classmethod

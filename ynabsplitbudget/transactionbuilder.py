@@ -5,17 +5,16 @@ from datetime import datetime
 from typing import Union
 
 from ynabsplitbudget.models.transaction import RootTransaction, ComplementTransaction, LookupTransaction
-from ynabsplitbudget.models.user import User
 
 
 @dataclass
 class TransactionBuilder:
-	user: User
+	account_id: str
 
 	def build(self, t_dict: dict) -> Union[RootTransaction, ComplementTransaction, LookupTransaction]:
 		if t_dict['import_id'] and 's||' in t_dict['import_id']:
 			return self.build_complement(t_dict)
-		if t_dict['account_id'] not in self.user.account.account_id:
+		if t_dict['account_id'] not in self.account_id:
 			return self.build_lookup(t_dict)
 		return self.build_root(t_dict)
 
