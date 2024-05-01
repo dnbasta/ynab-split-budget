@@ -76,8 +76,8 @@ ynab_split_budget = YnabSplitBudget.from_yaml(path='path/to/config.yaml', user='
 ### 3. Split transactions
 Call the `split()` method of the instance. It will split flagged transactions in the budget into a subtransaction with
 the original category and a transfer to the split account. By default, the transfer transactions will show up as 
-uncleared in the split account. The optional `clear_split` parameter allows to automatically clear the transactions in 
-the split account. The function returns the count of split transactions.
+uncleared in the split account. The optional `clear` parameter allows to automatically clear the transactions in 
+the split account. The function returns the updated transactions after applying the split.
 ```py
 ynab_split_budget.split()
 ```
