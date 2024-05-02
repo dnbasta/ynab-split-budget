@@ -96,7 +96,9 @@ class YnabSplitBudget:
 		"""Reconciles cleared transactions in the current account
 
 		:returns: count of reconciled transactions
+		:raises BalancesDontMatch: if cleared amounts in both accounts don't match
 		"""
+		self.raise_on_balances_off()
 		creds = Credentials(token=self.user.token, budget=self.user.budget_id,
 							account=self.user.account_id)
 		ra = ReconcileAdjuster(creds)

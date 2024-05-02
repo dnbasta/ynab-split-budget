@@ -41,7 +41,7 @@ user = User(name='<name>', token='<token>', budget_id='<budget_id>',
 partner = User(name='<name>', token='<token>', budget_id='<budget_id>', 
                account_id='<account_id', flag_color='<flag_color>')
 
-ynab_split_budget = YnabSplitBudget(partner=partner)
+split_budget = YnabSplitBudget(user=user, partner=partner)
 ```
 ### 3. Split transactions
 Call the `split()` method of the instance. It will split flagged transactions in the budget into a subtransaction with
@@ -49,7 +49,7 @@ the original category and a transfer to the split account. By default, the trans
 uncleared in the split account. The optional `clear` parameter allows to automatically clear the transactions in 
 the split account. The function returns the updated transactions after applying the split.
 ```py
-ynab_split_budget.split()
+split_budget.split()
 ```
 
 ### 4. Push new splits to partner split account
@@ -58,24 +58,30 @@ both accounts in sync. By default, the function will compare and insert transact
 takes a `since` parameter in the form of `datetime.date` to set a timeframe different from 30 days. 
 
 ```py
-ynab_split_budget.push()
+split_budget.push()
 ```
 ## Advanced Usage
 ### Check Balances
 The `raise_on_balances_off()` function compares the cleared balances in both split accounts. If they don't match it 
 will raise a `BalancesDontMatch` error which includes the values of the balances.
 ```py
-ynab_split_budget.raise_on_balances_off()
+split_budget.raise_on_balances_off()
 ```
 ### Delete Orphaned Complements
 The `delete_orphans()` function deletes orphaned transactions in the partner split account, which don't have a 
 corresponding transaction in the user split account any more. It does return a list with the deleted transactions. 
 By default, the function compares transactions of the last 30 days. Optionally it takes a `since` parameter in the 
 form of `datetime.date` to set a timeframe different from 30 days.
-
 ```py
-ynab_split_budget.delete_orphans()
+split_budget.delete_orphans()
 ```
+### Reconcile split account
+The `reconcile()` function allows to reconcile the split account. It does check if the balances match before reconciling
+and will an `BalancesDontMatch` error if they don't.
+```py 
+split_budget.reconcile()
+```
+
 ### Show Logs
 The library logs information about the result of the methods at the 'INFO' level. The logs can be made visible by 
 importing the logging module and set it to the level `INFO`. The logger itself can also be accessed via the `logger` 
