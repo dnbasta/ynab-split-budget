@@ -37,6 +37,7 @@ from ynabsplitbudget import YnabSplitBudget, User
 
 user = User(name='<name>', token='<token>', budget_id='<budget_id>', 
             account_id='<account_id', flag_color='<flag_color>')
+
 partner = User(name='<name>', token='<token>', budget_id='<budget_id>', 
                account_id='<account_id', flag_color='<flag_color>')
 
@@ -84,7 +85,7 @@ import logging
 
 logging.basicConfig(level='INFO')
 ```
-### Run via bash commands
+### Run via bash
 You can run this library also from bash with the following basic structure
 ```bash
 $ python -m ynabsplitbudget -u <path/user.yaml> -p <path/partner.yaml> --split
