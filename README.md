@@ -35,10 +35,10 @@ Possible colors for the flag value are `red`, `orange`, `yellow`, `green`, `blue
 ```py
 from ynabsplitbudget import YnabSplitBudget, User
 
-user = User(name='<name>', token='<token>', budget_id='<budget_id>', account_id='<account_id', 
-            flag_color='<flag_color>')
-partner = User(name='<name>', token='<token>', budget_id='<budget_id>', account_id='<account_id', 
-            flag_color='<flag_color>')
+user = User(name='<name>', token='<token>', budget_id='<budget_id>', 
+            account_id='<account_id', flag_color='<flag_color>')
+partner = User(name='<name>', token='<token>', budget_id='<budget_id>', 
+               account_id='<account_id', flag_color='<flag_color>')
 
 ynab_split_budget = YnabSplitBudget(partner=partner)
 ```
