@@ -21,17 +21,19 @@ pip install ynab-split-budget
 ```
 ## Usage
 ### 1. Create a transaction
-Create a transaction in the budget and add a specific flag in a specific color to be used for the splits. The 
+Create a transaction in the budget and add a specific flag color for the splits. The 
 transaction needs to be cleared in order to be considered by this library. By default, the transaction will be split 
 in half, but you can specify a different split by adding `@x%` for percentage or `@x` for specific amount in the memo 
 of the transaction. The amount you specify in this split will be transferred to your sharing account. You can also 
 create a plain transfer to the shared account which will be completely allocated to the partner account.
 
 ### 2. Initialize library
-You can find the ID of the budget and of the account if you go to https://app.ynab.com/ and open the target account by
-clicking on the name on the left hand side menu. The URL does now contain both IDs 
-`https://app.ynab.com/<budget_id>/accounts/<account_id>`
-Possible colors for the flag value are `red`, `orange`, `yellow`, `green`, `blue` and `purple`
+Initialize the library by creating two `User` instances and pass them as user and partner to the constructor of the 
+main class. For the flag_color set the value used marking the transaction earlier. Possible color values are `red`, 
+`orange`, `yellow`, `green`, `blue` and `purple`. The id of the budget and of the account can be found going to 
+https://app.ynab.com/ and opening the target account by clicking on the name on the left hand side menu. The URL does 
+now contain both IDs `https://app.ynab.com/<budget_id>/accounts/<account_id>`. 
+The `User` object can be optionally initialized from a YAML file using the `from_yaml()` classmethod.
 ```py
 from ynabsplitbudget import YnabSplitBudget, User
 
