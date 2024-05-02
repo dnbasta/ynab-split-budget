@@ -29,6 +29,7 @@ class YnabSplitBudget:
 		last 30 days.
 
 		:param since: If set to date, will push transactions from that date onwards instead of default 30 days
+		:return: List of inserted transactions in partner split account
 		"""
 		since = self._substitute_default_since(since)
 		repo = SyncRepository(user=self.user, partner=self.partner)
