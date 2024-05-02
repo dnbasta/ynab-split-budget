@@ -1,9 +1,7 @@
 import logging
 from datetime import date, timedelta, datetime
-from pathlib import Path
 from typing import List, Optional
 
-import yaml
 from ynabtransactionadjuster import Credentials, Transaction
 
 from ynabsplitbudget.adjusters import ReconcileAdjuster, SplitAdjuster, ClearAdjuster
@@ -48,7 +46,8 @@ class YnabSplitBudget:
 		:return: list with split transactions
 		"""
 		creds = Credentials(token=self.user.token, budget=self.user.budget_id)
-		s = SplitAdjuster(creds, flag_color=self.user.flag_color, transfer_payee_id=self.user.fetch_account().transfer_payee_id,
+		s = SplitAdjuster(creds, flag_color=self.user.flag_color,
+						  transfer_payee_id=self.user.fetch_account().transfer_payee_id,
 						  account_id=self.user.account_id)
 		mod_trans = s.apply()
 		updated_transactions = s.update(mod_trans)
