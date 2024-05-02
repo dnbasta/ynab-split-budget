@@ -2,7 +2,7 @@
 .idea
 .DS_Store
 env*/
-config.yaml
+*.yaml
 dist/
 live.py
 .pytest_cache/

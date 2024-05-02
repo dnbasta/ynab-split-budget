@@ -1,43 +1,45 @@
-from datetime import date
-from unittest.mock import patch, MagicMock, ANY
+from datetime import date, datetime
+from unittest.mock import MagicMock, ANY
 
 import pytest
-from requests import Response
+from requests import Response, HTTPError
 
-from ynabsplitbudget.client import BaseClient, SyncClient, SplitClient
+from ynabsplitbudget.client import Client
 from ynabsplitbudget.models.account import Account
-from ynabsplitbudget.models.exception import BudgetNotFound, AccountNotFound, SplitNotValid
-from ynabsplitbudget.models.splittransaction import SplitTransaction
-from ynabsplitbudget.models.transaction import RootTransaction, LookupTransaction
-from ynabsplitbudget.models.user import User
-from ynabsplitbudget.transactionbuilder import SplitParser, SplitTransactionBuilder
+from ynabsplitbudget.models.exception import BudgetNotFound, AccountNotFound
+from ynabsplitbudget.models.transaction import RootTransaction, LookupTransaction, ComplementTransaction
+
+
+@pytest.fixture
+def mock_client():
+	client = Client(token='', user_name='', budget_id='', account_id='account_id')
+	client.session = MagicMock()
+	return client
+
+
+def mock_response(data: dict) -> MagicMock:
+	mock_resp_obj = MagicMock(spec=Response)
+	mock_resp_obj.json.return_value = data
+	return mock_resp_obj
 
 
 @pytest.mark.parametrize('budget, account, expected', [('bullshit', 'bullshit', BudgetNotFound),
 													   ('sample_budget_id', 'bullshit', AccountNotFound)])
-@patch('ynabsplitbudget.client.requests.get')
-def test_fetch_account_fails(mock_response, mock_budget, budget, account, expected):
+def test_fetch_account_fails(mock_client, mock_budget, budget, account, expected):
 	# Arrange
-	mock_resp_obj = MagicMock(spec=Response)
-	mock_resp_obj.json.return_value = {'data': {'budgets': [mock_budget]}}
-	mock_response.return_value = mock_resp_obj
+	mock_client.session.get.return_value = mock_response({'data': {'budgets': [mock_budget]}})
 
 	# Act
 	with pytest.raises(expected):
-		c = BaseClient(token='', user_name='')
-		c.fetch_account(budget_id=budget, account_id=account)
+		mock_client.fetch_account(budget_id=budget, account_id=account)
 
 
-@patch('ynabsplitbudget.client.requests.get')
-def test_fetch_account_passes(mock_response, mock_budget):
+def test_fetch_account_passes(mock_client, mock_budget):
 	# Arrange
-	mock_resp_obj = MagicMock(spec=Response)
-	mock_resp_obj.json.return_value = {'data': {'budgets': [mock_budget]}}
-	mock_response.return_value = mock_resp_obj
+	mock_client.session.get.return_value = mock_response({'data': {'budgets': [mock_budget]}})
 
 	# Act
-	c = BaseClient(token='', user_name='')
-	a = c.fetch_account(budget_id='sample_budget_id', account_id='sample_account_id')
+	a = mock_client.fetch_account(budget_id='sample_budget_id', account_id='sample_account_id')
 
 	# Assert
 	assert isinstance(a, Account)
@@ -49,16 +51,12 @@ def test_fetch_account_passes(mock_response, mock_budget):
 	assert a.transfer_payee_id == 'sample_transfer_payee_id'
 
 
-@patch('ynabsplitbudget.client.requests.get')
-def test_fetch_new(mock_response, mock_transaction_dict):
+def test_fetch_new(mock_client, mock_transaction_dict):
 	# Arrange
-	mock_resp_obj = MagicMock()
-	mock_resp_obj.json.return_value = {'data': {'transactions': [mock_transaction_dict],
-												'server_knowledge': 100}}
-	mock_response.return_value = mock_resp_obj
+	mock_client.session.get.return_value = mock_response({'data': {'transactions': [mock_transaction_dict],
+																   'server_knowledge': 100}})
 	# Act
-	c = SyncClient(MagicMock(account=MagicMock(account_id='sample_account')))
-	r = c.fetch_roots(since=date(2024,1, 1))
+	r = mock_client.fetch_roots(since=date(2024, 1, 1))
 
 	# Assert
 	t = r[0]
@@ -72,76 +70,83 @@ def test_fetch_new(mock_response, mock_transaction_dict):
 	assert t.transaction_date == date(2024, 1, 1)
 
 
-@patch('ynabsplitbudget.client.requests.get')
-def test_fetch_new_empty(mock_response, mock_transaction_dict):
+def test_fetch_new_empty(mock_client, mock_transaction_dict):
 	# Arrange
-	mock_resp_obj = MagicMock()
-	mock_resp_obj.json.return_value = {'data': {'transactions': [],
-												'server_knowledge': 100}}
-	mock_response.return_value = mock_resp_obj
+	mock_client.session.get.return_value = mock_response({'data': {'transactions': [],
+																   'server_knowledge': 100}})
 	# Act
-	c = SyncClient(MagicMock())
-	r = c.fetch_roots(since=date(2024, 1, 1))
+	r = mock_client.fetch_roots(since=date(2024, 1, 1))
 
 	# Assert
 	assert len(r) == 0
 
 
-@patch('ynabsplitbudget.client.requests.get')
-def test_fetch_new_to_split_flag(mock_response, mock_transaction_dict):
+def test_fetch_balance(mock_client):
 	# Arrange
-	mock_resp_obj = MagicMock(spec=Response)
-	mock_resp_obj.json.return_value = {'data': {'transactions': [mock_transaction_dict]}}
-	mock_response.return_value = mock_resp_obj
-
-	u = User(name='user_name', flag='purple',
-			 token='sample_token',
-			 account=MagicMock())
-	c = SplitClient(u)
-
+	mock_client.session.get.return_value = mock_response({'data': {'account': {'cleared_balance': 100}}})
 	# Act
-	st = c.fetch_new_to_split()
-
-	# Assert
-	assert isinstance(st[0], SplitTransaction)
-	assert st[0].split_amount == 500
-
-
-@patch('ynabsplitbudget.client.requests.get')
-def test_fetch_balance(mock_response):
-	# Arrange
-	r = MagicMock()
-	r.json.return_value = {'data': {'account': {'cleared_balance': 100}}}
-	mock_response.return_value = r
-	# Act
-
-	c = SyncClient(user=MagicMock())
-	b = c.fetch_balance()
+	b = mock_client.fetch_balance()
 
 	# Assert
 	assert b == 100
 
 
-@patch('ynabsplitbudget.client.SyncClient._get')
-def test_fetch_lookup_no_since(mock_response, mock_transaction_dict):
+def test_fetch_lookup_no_since(mock_client, mock_transaction_dict):
 	# Arrange
-	mock_response.return_value = {'transactions': [mock_transaction_dict]}
+	mock_client.session.get.return_value = mock_response({'data': {'transactions': [mock_transaction_dict]}})
 
 	# Act
-	c = SyncClient(MagicMock())
-	r = c.fetch_lookup(since=date(2024, 1, 1))
+	r = mock_client.fetch_lookup(since=date(2024, 1, 1))
 
 	assert len(r) == 1
 	assert isinstance(r[0], LookupTransaction)
 
 
-@patch('ynabsplitbudget.client.SyncClient._get')
-def test_fetch_lookup_since(mock_get, mock_transaction_dict):
+def test_fetch_lookup_since(mock_client, mock_transaction_dict):
 	# Arrange
-	mock_get.return_value = {'transactions': [mock_transaction_dict]}
+	mock_client.session.get.return_value = mock_response({'data': {'transactions': [mock_transaction_dict]}})
 
 	# Act
-	c = SyncClient(MagicMock())
-	c.fetch_lookup(since=date(2024, 1, 1))
+	mock_client.fetch_lookup(since=date(2024, 1, 1))
 
-	mock_get.assert_called_with(ANY, params={'since_date': '2024-01-01'})
+	mock_client.session.get.assert_called_with(ANY, params={'since_date': '2024-01-01'})
+
+
+def test_insert_complement(mock_client, mock_transaction_dict):
+	# Arrange
+	mock_root = RootTransaction(id='id', share_id='share_id', account_id='account_id_o',
+					transaction_date=date(2024, 1, 1), memo='memo', payee_name='payee_name', amount=1000)
+	mock_transaction_dict['import_id'] = 's||xxx'
+	mock_client.session.post.return_value = mock_response({'data': {'transaction': mock_transaction_dict}})
+
+	# Act
+	c = mock_client.insert_complement(mock_root)
+
+	# Assert
+	mock_client.session.post.assert_called_once()
+	post_dict = mock_client.session.post.call_args_list[0][1]['json']['transaction']
+	assert post_dict['account_id'] == mock_client.account_id
+	assert post_dict['date'] == datetime.strftime(mock_root.transaction_date, '%Y-%m-%d')
+	assert post_dict['amount'] == - mock_root.amount
+	assert post_dict['payee_name'] == mock_root.payee_name
+	assert post_dict['memo'] == mock_root.memo
+	assert post_dict['import_id'] == f's||{mock_root.share_id}||0'
+
+	assert isinstance(c, ComplementTransaction)
+
+
+def test_insert_complement_iteration(mock_client, mock_transaction_dict):
+	# Arrange
+	mock_root = RootTransaction(id='id', share_id='share_id', account_id='account_id_o',
+					transaction_date=date(2024, 1, 1), memo='memo', payee_name='payee_name', amount=1000)
+	mock_transaction_dict['import_id'] = 's||xxx'
+	mock_client.session.post.side_effect = [HTTPError(response=MagicMock(status_code=409)),
+											mock_response({'data': {'transaction': mock_transaction_dict}})]
+
+	# Act
+	c = mock_client.insert_complement(mock_root)
+
+	# Assert
+	assert mock_client.session.post.call_count == 2
+	post_dict = mock_client.session.post.call_args_list[1][1]['json']['transaction']
+	assert post_dict['import_id'] == f's||{mock_root.share_id}||1'

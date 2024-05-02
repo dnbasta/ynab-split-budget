@@ -1,7 +1,7 @@
 from datetime import date
 from typing import List, Union
 
-from ynabsplitbudget.client import SyncClient
+from ynabsplitbudget.client import Client
 from ynabsplitbudget.models.transaction import RootTransaction, ComplementTransaction, LookupTransaction
 from ynabsplitbudget.models.user import User
 
@@ -9,8 +9,10 @@ from ynabsplitbudget.models.user import User
 class SyncRepository:
 
 	def __init__(self, user: User, partner: User):
-		self._user_client = SyncClient(user)
-		self._partner_client = SyncClient(partner)
+		self._user_client = Client(token=user.token, budget_id=user.budget_id, account_id=user.account_id,
+								   user_name=user.name)
+		self._partner_client = Client(token=partner.token, budget_id=partner.budget_id, account_id=partner.account_id,
+									  user_name=partner.name)
 
 	def fetch_roots_wo_complement(self, since: date) -> List[RootTransaction]:
 		roots = self._user_client.fetch_roots(since=since)
@@ -20,8 +22,8 @@ class SyncRepository:
 															 lookup_date=since)
 		return transactions_replaced_payee
 
-	def insert_complements(self, transactions: List[RootTransaction]):
-		[self._partner_client.insert_complement(t) for t in transactions]
+	def insert_complements(self, transactions: List[RootTransaction]) -> List[ComplementTransaction]:
+		return [self._partner_client.insert_complement(t) for t in transactions]
 
 	def replace_payee(self, transactions: List[RootTransaction], lookup_date: date) -> List[RootTransaction]:
 		ul = self._user_client.fetch_lookup(lookup_date)
