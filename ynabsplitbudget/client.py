@@ -67,18 +67,16 @@ class Client:
 		transactions = [self.transaction_builder.build(t_dict=t) for t in data_dict]
 		return transactions
 
-	def insert_complement(self, t: RootTransaction):
+	def insert_complement(self, t: RootTransaction) -> ComplementTransaction:
 		iteration = 0
-		try_again = True
-		while try_again:
+		while True:
 			try:
-				self._insert(t, iteration=iteration)
-				try_again = False
+				return self._insert(t, iteration=iteration)
 			except HTTPError as e:
 				if e.response.status_code == 409:
 					iteration += 1
 
-	def _insert(self, t: RootTransaction, iteration: int):
+	def _insert(self, t: RootTransaction, iteration: int) -> ComplementTransaction:
 		url = f'{YNAB_BASE_URL}budgets/{self.budget_id}/transactions'
 		data = {'transaction': {
 			"account_id": self.account_id,
@@ -92,6 +90,8 @@ class Client:
 		}}
 		r = self.session.post(url, json=data)
 		r.raise_for_status()
+		complement = self.transaction_builder.build_complement(r.json()['data']['transaction'])
+		return complement
 
 	def fetch_balance(self) -> int:
 		url = f'{YNAB_BASE_URL}budgets/{self.budget_id}/accounts/{self.account_id}'

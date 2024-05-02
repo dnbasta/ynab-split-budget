@@ -7,7 +7,7 @@ from ynabtransactionadjuster import Credentials, Transaction
 from ynabsplitbudget.adjusters import ReconcileAdjuster, SplitAdjuster, ClearAdjuster
 from ynabsplitbudget.client import Client
 from ynabsplitbudget.models.exception import BalancesDontMatch
-from ynabsplitbudget.models.transaction import ComplementTransaction
+from ynabsplitbudget.models.transaction import ComplementTransaction, RootTransaction
 from ynabsplitbudget.models.user import User
 from ynabsplitbudget.syncrepository import SyncRepository
 
@@ -24,7 +24,7 @@ class YnabSplitBudget:
 		self.partner = partner
 		self.logger = self._set_up_logger()
 
-	def push(self, since: date = None) -> int:
+	def push(self, since: date = None) -> List[ComplementTransaction]:
 		"""Pushes transactions from user split account to partner split account. By default, considers transactions of
 		last 30 days.
 
@@ -34,9 +34,10 @@ class YnabSplitBudget:
 		repo = SyncRepository(user=self.user, partner=self.partner)
 		transactions = repo.fetch_roots_wo_complement(since=since)
 
-		repo.insert_complements(transactions)
-		logging.getLogger(__name__).info(f'inserted {len(transactions)} complements into account of {self.partner.name}')
-		return len(transactions)
+		complement_transactions = repo.insert_complements(transactions)
+		logging.getLogger(__name__).info(f'inserted {len(complement_transactions)} complements into account of '
+										 f'{self.partner.name}')
+		return complement_transactions
 
 	def split(self, clear: bool = False) -> List[Transaction]:
 		"""Splits transactions (by default 50%) into subtransaction with original category and transfer subtransaction
