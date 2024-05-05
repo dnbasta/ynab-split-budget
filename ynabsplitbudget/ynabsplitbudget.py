@@ -4,10 +4,10 @@ from typing import List, Optional
 
 from ynabtransactionadjuster import Credentials, Transaction
 
-from ynabsplitbudget.adjusters import ReconcileAdjuster, SplitAdjuster, ClearAdjuster
+from ynabsplitbudget.adjusters import SplitAdjuster
 from ynabsplitbudget.client import Client
 from ynabsplitbudget.models.exception import BalancesDontMatch
-from ynabsplitbudget.models.transaction import ComplementTransaction, RootTransaction
+from ynabsplitbudget.models.transaction import ComplementTransaction
 from ynabsplitbudget.models.user import User
 from ynabsplitbudget.syncrepository import SyncRepository
 
@@ -24,15 +24,16 @@ class YnabSplitBudget:
 		self.partner = partner
 		self.logger = self._set_up_logger()
 
-	def push(self, since: date = None) -> List[ComplementTransaction]:
+	def push(self, include_uncleared: bool = False, since: date = None) -> List[ComplementTransaction]:
 		"""Pushes transactions from user split account to partner split account. By default, considers transactions of
 		last 30 days.
 
+		:param include_uncleared: If set to True, will also consider uncleared transactions
 		:param since: If set to date, will push transactions from that date onwards instead of default 30 days
 		:return: List of inserted transactions in partner split account
 		"""
 		since = self._substitute_default_since(since)
-		repo = SyncRepository(user=self.user, partner=self.partner)
+		repo = SyncRepository(user=self.user, partner=self.partner, include_uncleared=include_uncleared)
 		transactions = repo.fetch_roots_wo_complement(since=since)
 
 		complement_transactions = repo.insert_complements(transactions)
@@ -40,11 +41,10 @@ class YnabSplitBudget:
 										 f'{self.partner.name}')
 		return complement_transactions
 
-	def split(self, clear: bool = False) -> List[Transaction]:
+	def split(self) -> List[Transaction]:
 		"""Splits transactions (by default 50%) into subtransaction with original category and transfer subtransaction
 		to split account
 
-		:param clear: If set to true transactions in split account will automatically be set to cleared
 		:return: list with split transactions
 		"""
 		creds = Credentials(token=self.user.token, budget=self.user.budget_id)
@@ -54,16 +54,6 @@ class YnabSplitBudget:
 		mod_trans = s.apply()
 		updated_transactions = s.update(mod_trans)
 		logging.getLogger(__name__).info(f'split {len(updated_transactions)} transactions for {self.user.name}')
-
-		if clear:
-			transfer_transaction_ids = [st.transfer_transaction_id for t in updated_transactions for st in
-										t.subtransactions if st.transfer_transaction_id]
-			creds = Credentials(token=self.user.token, budget=self.user.budget_id,
-								account=self.user.account_id)
-			ca = ClearAdjuster(creds, split_transaction_ids=transfer_transaction_ids)
-			mod_trans_clear = ca.apply()
-			count_clear = len(s.update(mod_trans_clear))
-			logging.getLogger(__name__).info(f'cleared {count_clear} transactions for {self.user.name}')
 
 		return updated_transactions
 
@@ -93,21 +83,6 @@ class YnabSplitBudget:
 		logging.getLogger(__name__).info(f'deleted {len(orphaned_complements)} orphaned complements in account of {self.partner.name}')
 		logging.getLogger(__name__).info(orphaned_complements)
 		return orphaned_complements
-
-	def reconcile(self) -> int:
-		"""Reconciles cleared transactions in the current account
-
-		:returns: count of reconciled transactions
-		:raises BalancesDontMatch: if cleared amounts in both accounts don't match
-		"""
-		self.raise_on_balances_off()
-		creds = Credentials(token=self.user.token, budget=self.user.budget_id,
-							account=self.user.account_id)
-		ra = ReconcileAdjuster(creds)
-		mod_trans = ra.apply()
-		updated_trans = ra.update(mod_trans)
-		logging.getLogger(__name__).info(f'reconciled {len(updated_trans)} transactions for {self.user.name}')
-		return len(updated_trans)
 
 	@staticmethod
 	def _substitute_default_since(since: Optional[date]) -> date:

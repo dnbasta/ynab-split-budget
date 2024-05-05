@@ -48,19 +48,24 @@ split_budget = YnabSplitBudget(user=user, partner=partner)
 ### 3. Split transactions
 Call the `split()` method of the instance. It will split flagged transactions in the budget into a subtransaction with
 the original category and a transfer to the split account. By default, the transfer transactions will show up as 
-uncleared in the split account. The optional `clear` parameter allows to automatically clear the transactions in 
-the split account. The function returns the updated transactions after applying the split.
+uncleared in the split account.
 ```py
 split_budget.split()
 ```
 
 ### 4. Push new splits to partner split account
 Calling the `push()` function will insert new transactions from user split account into split account of partner to keep
-both accounts in sync. By default, the function will compare and insert transactions of the last 30 days. Optionally it 
+both accounts in sync. By default, the function will only consider cleared transactions. This is in general a safer 
+option as it forces users to manually check and clear transactions in the split account. However, it makes running the 
+whole functionality automatically cumbersome, hence the function takes an optional `include_uncleared` parameter which, 
+if set to `True`, makes it also consider uncleared transactions. 
+Additionally by default, the function will compare and insert transactions of the last 30 days. Optionally it 
 takes a `since` parameter in the form of `datetime.date` to set a timeframe different from 30 days. 
 
 ```py
 split_budget.push()
+# or optionally with considering uncleared transactions as well
+split_budget.push(include_uncleared=True)
 ```
 ## Advanced Usage
 ### Check Balances
@@ -76,12 +81,6 @@ By default, the function compares transactions of the last 30 days. Optionally i
 form of `datetime.date` to set a timeframe different from 30 days.
 ```py
 split_budget.delete_orphans()
-```
-### Reconcile split account
-The `reconcile()` function allows to reconcile the split account. It does check if the balances match before reconciling
-and will an `BalancesDontMatch` error if they don't.
-```py 
-split_budget.reconcile()
 ```
 
 ### Show Logs

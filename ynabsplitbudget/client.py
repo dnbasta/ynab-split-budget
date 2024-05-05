@@ -47,15 +47,16 @@ class Client:
 					   transfer_payee_id=account['transfer_payee_id'],
 					   currency=budget['currency_format']['iso_code'])
 
-	def fetch_roots(self, since: date) -> List[RootTransaction]:
+	def fetch_roots(self, since: date, include_uncleared: bool) -> List[RootTransaction]:
 		url = f'{YNAB_BASE_URL}budgets/{self.budget_id}/accounts/{self.account_id}/transactions'
 		r = self.session.get(url, params={'since_date': datetime.strftime(since, '%Y-%m-%d')})
 		r.raise_for_status()
 		transactions_dicts = r.json()['data']['transactions']
-		transactions_filtered = [t for t in transactions_dicts if not t['cleared'] == 'uncleared'
-							  and t['deleted'] is False
+		transactions_filtered = [t for t in transactions_dicts if t['deleted'] is False
 							  and (t['import_id'] is None or 's||' not in t['import_id'])
 							  and t['payee_name'] != 'Reconciliation Balance Adjustment']
+		if not include_uncleared:
+			transactions_filtered = [t for t in transactions_filtered  if not t['cleared'] == 'uncleared']
 		transactions = [self.transaction_builder.build_root(t_dict=t) for t in transactions_filtered]
 		return transactions
 

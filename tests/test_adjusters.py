@@ -7,10 +7,11 @@ from ynabsplitbudget.adjusters import ReconcileAdjuster, SplitAdjuster, ClearAdj
 
 
 def test_reconcile_filter():
-
+	# Arrange
 	ra = ReconcileAdjuster(credentials=MagicMock())
 	# Act
 	t = ra.filter([PropertyMock(cleared='cleared'), PropertyMock(cleared='uncleared'), PropertyMock(cleared='reconciled')])
+	# Assert
 	assert len(t) == 1
 
 
@@ -18,8 +19,24 @@ def test_reconcile_filter():
 def test_reconcile_adjust(mock_categories):
 	# Arrange
 	ma = ReconcileAdjuster(credentials=MagicMock())
+	mock_category = MagicMock(spec=Category)
+	# Act
+	t = ma.adjust(PropertyMock(cleared='cleared', category=mock_category),
+				  PropertyMock(cleared='cleared', category=mock_category))
+	mock_categories.fetch_by_name.assert_not_called()
+	# Assert
+	assert t.cleared == 'reconciled'
+	assert isinstance(t.category, Category)
+
+
+@patch('ynabsplitbudget.adjusters.ReconcileAdjuster.categories', new_callable=PropertyMock())
+def test_reconcile_adjust_wo_category(mock_categories):
+	# Arrange
+	ma = ReconcileAdjuster(credentials=MagicMock())
 	mock_categories.fetch_by_name.return_value = MagicMock(spec=Category)
-	t = ma.adjust(PropertyMock(cleared='cleared'), PropertyMock(cleared='cleared'))
+	# Act
+	t = ma.adjust(PropertyMock(cleared='cleared', category=None), PropertyMock(cleared='cleared', category=None))
+	# Assert
 	assert t.cleared == 'reconciled'
 	assert isinstance(t.category, Category)
 
@@ -40,15 +57,16 @@ def test_split_filter():
 
 @patch('ynabsplitbudget.adjusters.SplitAdjuster.payees', new_callable=PropertyMock())
 def test_split_adjust(mock_payees):
+	# Arrange
 	sa = SplitAdjuster(credentials=MagicMock(), flag_color='red', transfer_payee_id='transfer_payee_id',
 					   account_id='account_id')
 	mock_payees.fetch_by_id.return_value = Payee(name='transfer_payee')
-
+	# Act
 	mt = sa.adjust(PropertyMock(category=Category(id='category_id', name='category_name'),
 								amount=-1000,
 								payee=Payee(name='payee_name'),
 								memo='@25% memo'), PropertyMock())
-
+	# Assert
 	assert len(mt.subtransactions) == 2
 	assert mt.subtransactions[0].amount == -250
 	assert mt.subtransactions[0].payee.name == 'transfer_payee'
@@ -70,11 +88,23 @@ def test_clear_adjust(mock_categories):
 	# Arrange
 	ca = ClearAdjuster(credentials=MagicMock(), split_transaction_ids=[])
 	mock_category = Category(name='category_name', id='category_id')
-	mock_categories.fetch_by_name.return_value = mock_category
-
 	# Act
-	mt = ca.adjust(PropertyMock(cleared='uncleared'), PropertyMock(cleared='uncleared'))
+	mt = ca.adjust(PropertyMock(cleared='uncleared', category=mock_category),
+				   PropertyMock(cleared='uncleared', category=mock_category))
+	# Assert
+	mock_categories.fetch_by_name.assert_not_called()
+	assert mt.cleared == 'cleared'
+	assert mt.category == mock_category
 
+
+@patch('ynabsplitbudget.adjusters.ClearAdjuster.categories', new_callable=PropertyMock())
+def test_clear_adjust_wo_category(mock_categories):
+	# Arrange
+	ca = ClearAdjuster(credentials=MagicMock(), split_transaction_ids=[])
+	mock_category = Category(name='category_name', id='category_id')
+	mock_categories.fetch_by_name.return_value = mock_category
+	# Act
+	mt = ca.adjust(PropertyMock(cleared='uncleared', category=None), PropertyMock(cleared='uncleared', category=None))
 	# Assert
 	assert mt.cleared == 'cleared'
 	assert mt.category == mock_category
