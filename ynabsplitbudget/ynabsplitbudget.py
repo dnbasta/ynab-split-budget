@@ -81,7 +81,8 @@ class YnabSplitBudget:
 				   token=self.partner.token)
 		[c.delete_complement(oc.id) for oc in orphaned_complements]
 		logging.getLogger(__name__).info(f'deleted {len(orphaned_complements)} orphaned complements in account of {self.partner.name}')
-		logging.getLogger(__name__).info(orphaned_complements)
+		if orphaned_complements:
+			logging.getLogger(__name__).info(orphaned_complements)
 		return orphaned_complements
 
 	@staticmethod
