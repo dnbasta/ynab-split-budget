@@ -20,9 +20,9 @@ if __name__ == '__main__':
 										   '[-p | --partner] <path/partner.yaml> '
 										   '[-s | --split] '
 										   '[-i | --push] '
+										   '[-iu | --push-uncleared] '
 										   '[-b | --balances]'
 										   '[-d | --delete-orphans]'
-										   '[-r | --reconcile]'
 										   '[--since "YYYY-mm-dd"]')
 	parser.add_argument("-u", "--user", type=str, required=True,
 						help="path of config YAML to use for user")
@@ -36,10 +36,10 @@ if __name__ == '__main__':
 						help="raise error if balances of the two accounts don't match")
 	parser.add_argument("-d", "--delete-orphans", action="store_true",
 						help="deletes orphaned transactions in partner account")
-	parser.add_argument("-r", "--reconcile", action="store_true",
-						help="reconciles account if balance matches with partner account")
 	parser.add_argument("--since", type=str,
 						help='provide optional date if library should use something else than 30 days default')
+	parser.add_argument('-iu', "--push-uncleared", type=str,
+						help='push split transactions to partner account including uncleared transactions')
 
 	args = parser.parse_args()
 
@@ -60,11 +60,11 @@ if __name__ == '__main__':
 		ysb.split()
 	if args.push:
 		ysb.push(since=since)
+	elif args.push_uncleared:
+		ysb.push(since=since, include_uncleared=True)
 	if args.delete_orphans:
 		ysb.delete_orphans(since=since)
-	if args.balances or args.reconcile:
+	if args.balances:
 		ysb.raise_on_balances_off()
-	if args.reconcile:
-		ysb.reconcile()
 
 

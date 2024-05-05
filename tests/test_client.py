@@ -51,12 +51,36 @@ def test_fetch_account_passes(mock_client, mock_budget):
 	assert a.transfer_payee_id == 'sample_transfer_payee_id'
 
 
+def test_fetch_new_cleared_only(mock_client, mock_transaction_dict):
+	# Arrange
+	mock_transaction_uncleared = mock_transaction_dict.copy()
+	mock_transaction_uncleared['cleared'] = 'uncleared'
+	mock_client.session.get.return_value = mock_response({'data': {'transactions': [mock_transaction_dict,
+																					mock_transaction_uncleared],
+																   'server_knowledge': 100}})
+	# Act
+	r = mock_client.fetch_roots(since=date(2024, 1, 1), include_uncleared=False)
+
+	# Assert
+	assert len(r) == 1
+	t = r[0]
+	assert isinstance(t, RootTransaction)
+	assert t.share_id == '6f66e5aa449e868261ce'
+	assert t.account_id == 'sample_account'
+	assert t.amount == 1000
+	assert t.id == 'sample_id'
+	assert t.payee_name == 'sample_payee'
+	assert t.memo == 'sample_memo'
+	assert t.transaction_date == date(2024, 1, 1)
+
+
 def test_fetch_new(mock_client, mock_transaction_dict):
 	# Arrange
+	mock_transaction_dict['cleared'] = 'uncleared'
 	mock_client.session.get.return_value = mock_response({'data': {'transactions': [mock_transaction_dict],
 																   'server_knowledge': 100}})
 	# Act
-	r = mock_client.fetch_roots(since=date(2024, 1, 1))
+	r = mock_client.fetch_roots(since=date(2024, 1, 1), include_uncleared=True)
 
 	# Assert
 	t = r[0]
@@ -75,7 +99,7 @@ def test_fetch_new_empty(mock_client, mock_transaction_dict):
 	mock_client.session.get.return_value = mock_response({'data': {'transactions': [],
 																   'server_knowledge': 100}})
 	# Act
-	r = mock_client.fetch_roots(since=date(2024, 1, 1))
+	r = mock_client.fetch_roots(since=date(2024, 1, 1), include_uncleared=False)
 
 	# Assert
 	assert len(r) == 0

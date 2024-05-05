@@ -13,7 +13,8 @@ class ReconcileAdjuster(Adjuster):
 
 	def adjust(self, original: Transaction, modifier: Modifier) -> Modifier:
 		modifier.cleared = 'reconciled'
-		modifier.category = self.categories.fetch_by_name('Inflow: Ready to Assign')
+		if not modifier.category:
+			modifier.category = self.categories.fetch_by_name('Inflow: Ready to Assign')
 		return modifier
 
 
@@ -30,7 +31,8 @@ class ClearAdjuster(Adjuster):
 
 	def adjust(self, original: Transaction, modifier: Modifier) -> Modifier:
 		modifier.cleared = 'cleared'
-		modifier.category = self.categories.fetch_by_name('Inflow: Ready to Assign')
+		if not modifier.category:
+			modifier.category = self.categories.fetch_by_name('Inflow: Ready to Assign')
 		return modifier
 
 
@@ -43,7 +45,7 @@ class SplitAdjuster(Adjuster):
 		self.account_id = account_id
 
 	def filter(self, transactions: List[Transaction]) -> List[Transaction]:
-		return [t for t in transactions if t.cleared == 'cleared' and t.flag_color == self.flag_color
+		return [t for t in transactions if t.cleared == 'cleared' and t.approved and t.flag_color == self.flag_color
 				and not t.subtransactions and not t.account.id == self.account_id]
 
 	def adjust(self, original: Transaction, modifier: Modifier) -> Modifier:
