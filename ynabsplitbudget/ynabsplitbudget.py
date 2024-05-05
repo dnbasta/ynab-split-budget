@@ -33,8 +33,8 @@ class YnabSplitBudget:
 		:return: List of inserted transactions in partner split account
 		"""
 		since = self._substitute_default_since(since)
-		repo = SyncRepository(user=self.user, partner=self.partner, include_uncleared=include_uncleared)
-		transactions = repo.fetch_roots_wo_complement(since=since)
+		repo = SyncRepository(user=self.user, partner=self.partner)
+		transactions = repo.fetch_roots_wo_complement(since=since, include_uncleared=include_uncleared)
 
 		complement_transactions = repo.insert_complements(transactions)
 		logging.getLogger(__name__).info(f'inserted {len(complement_transactions)} complements into account of '

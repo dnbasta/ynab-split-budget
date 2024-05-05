@@ -8,15 +8,14 @@ from ynabsplitbudget.models.user import User
 
 class SyncRepository:
 
-	def __init__(self, user: User, partner: User, include_uncleared: bool):
+	def __init__(self, user: User, partner: User):
 		self._user_client = Client(token=user.token, budget_id=user.budget_id, account_id=user.account_id,
 								   user_name=user.name)
 		self._partner_client = Client(token=partner.token, budget_id=partner.budget_id, account_id=partner.account_id,
 									  user_name=partner.name)
-		self.cleared_only = include_uncleared
 
-	def fetch_roots_wo_complement(self, since: date) -> List[RootTransaction]:
-		roots = self._user_client.fetch_roots(since=since, include_uncleared=self.cleared_only)
+	def fetch_roots_wo_complement(self, since: date, include_uncleared: bool) -> List[RootTransaction]:
+		roots = self._user_client.fetch_roots(since=since, include_uncleared=include_uncleared)
 		pl = [t for t in self._partner_client.fetch_lookup(since) if isinstance(t, ComplementTransaction)]
 		roots_wo_complement = [t for t in roots if t.share_id not in [lo.share_id for lo in pl]]
 		transactions_replaced_payee = self.replace_payee(transactions=roots_wo_complement,
@@ -34,7 +33,7 @@ class SyncRepository:
 
 	def find_orphaned_partner_complements(self, since: date) -> List[ComplementTransaction]:
 		current_complements = [lo for lo in self._partner_client.fetch_lookup(since=since) if isinstance(lo, ComplementTransaction)]
-		current_roots = [cr for cr in self._user_client.fetch_roots(since=since)]
+		current_roots = [cr for cr in self._user_client.fetch_roots(since=since, include_uncleared=True)]
 		orphaned_complements = [c for c in current_complements if c.share_id not in [d.share_id for d in current_roots]]
 		return orphaned_complements
 
