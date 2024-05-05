@@ -15,8 +15,8 @@ def test_fetch_new_to_insert_new(mock_lookup, mock_changed):
 	mock_changed.return_value = [mock_transaction]
 	mock_lookup.return_value = [mock_lookup_transaction]
 	# Act
-	strepo = SyncRepository(user=MagicMock(), partner=MagicMock(), include_uncleared=True)
-	t = strepo.fetch_roots_wo_complement(since=date(2024, 1, 1))
+	strepo = SyncRepository(user=MagicMock(), partner=MagicMock())
+	t = strepo.fetch_roots_wo_complement(since=date(2024, 1, 1), include_uncleared=True)
 	# Assert
 	assert isinstance(t[0], RootTransaction)
 
@@ -31,8 +31,8 @@ def test_fetch_new_to_insert_not_new(mock_lookup, mock_changed):
 	mock_changed.return_value = [mock_transaction]
 	mock_lookup.return_value = [mock_complement]
 	# Act
-	strepo = SyncRepository(user=MagicMock(), partner=MagicMock(), include_uncleared=True)
-	t = strepo.fetch_roots_wo_complement(since=date(2024, 1, 1))
+	strepo = SyncRepository(user=MagicMock(), partner=MagicMock())
+	t = strepo.fetch_roots_wo_complement(since=date(2024, 1, 1), include_uncleared=True)
 	# Assert
 	assert len(t) == 0
 
@@ -44,7 +44,7 @@ def test_fetch_new_to_insert_empty(mock_lookup, mock_changed):
 	mock_changed.return_value = []
 	mock_lookup.return_value = []
 	# Act
-	strepo = SyncRepository(user=MagicMock(), partner=MagicMock(), include_uncleared=True)
-	t = strepo.fetch_roots_wo_complement(since=date(2024, 1, 1))
+	strepo = SyncRepository(user=MagicMock(), partner=MagicMock())
+	t = strepo.fetch_roots_wo_complement(since=date(2024, 1, 1), include_uncleared=True)
 	# Assert
 	assert len(t) == 0
