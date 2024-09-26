@@ -1,3 +1,4 @@
+from datetime import date
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -10,7 +11,7 @@ from ynabsplitbudget.models.exception import BalancesDontMatch
 def test_raise_on_balances_off_raise(mock_repository):
 	# Arrange
 	mock_repository.return_value = (100, -50)
-	ysb = YnabSplitBudget(user=MagicMock(), partner=MagicMock())
+	ysb = YnabSplitBudget(user=MagicMock(), partner=MagicMock(), since=MagicMock(type=date))
 	with pytest.raises(BalancesDontMatch):
 		ysb.raise_on_balances_off()
 
@@ -18,5 +19,5 @@ def test_raise_on_balances_off_raise(mock_repository):
 def test_raise_on_balances_off_dont_raise(mock_repository):
 	# Arrange
 	mock_repository.return_value = (100, -100)
-	ysb = YnabSplitBudget(user=MagicMock(), partner=MagicMock())
+	ysb = YnabSplitBudget(user=MagicMock(), partner=MagicMock(), since=MagicMock(type=date))
 	ysb.raise_on_balances_off()
