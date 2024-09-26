@@ -1,3 +1,4 @@
+from datetime import date
 from unittest.mock import MagicMock, PropertyMock, patch
 
 from ynabtransactionadjuster import Payee, Transaction
@@ -41,25 +42,57 @@ def test_reconcile_adjust_wo_category(mock_categories):
 	assert isinstance(t.category, Category)
 
 
-def test_split_filter():
+def test_split_subtransactions():
 	sa = SplitAdjuster(credentials=MagicMock(), flag_color='red', transfer_payee_id='transfer_payee_id',
-					   account_id='account_id')
-	f = sa.filter([PropertyMock(id='a', cleared='cleared', flag_color='red', account=MagicMock(id='account_idx'), subtransactions=[]),
-				   PropertyMock(id='b', cleared='cleared', flag_color=None, account=MagicMock(id='account_idx'), subtransactions=[]),
-				   PropertyMock(id='c', cleared='cleared', flag_color='yellow', account=MagicMock(id='account_idx'), subtransactions=[]),
-				   PropertyMock(id='d', cleared='uncleared', flag_color='red', account=MagicMock(id='account_idx'), subtransactions=[]),
-				   PropertyMock(id='c', cleared='reconciled', flag_color='red', account=MagicMock(id='account_idx'), subtransactions=[]),
-				   PropertyMock(id='c', cleared='cleared', flag_color='red', account=MagicMock(id='account_id'), subtransactions=[]),
-				   PropertyMock(id='c', cleared='cleared', flag_color='red', account=MagicMock(id='account_idx'), subtransactions=[MagicMock()])])
+					   account_id='account_id', since=date(2024, 1, 1))
+	f = sa.filter([PropertyMock(id='a', cleared='cleared', flag_color='red', account=MagicMock(id='account_idx'),
+								transaction_date=date(2024, 1, 1), subtransactions=[]),
+				   PropertyMock(id='b', cleared='cleared', flag_color='red', account=MagicMock(id='account_idx'),
+								transaction_date=date(2024, 1, 1), subtransactions=[MagicMock()])])
 	assert len(f) == 1
 	assert f[0].id == 'a'
 
+def test_split_cleared():
+	sa = SplitAdjuster(credentials=MagicMock(), flag_color='red', transfer_payee_id='transfer_payee_id',
+					   account_id='account_id', since=date(2024, 1, 1))
+	f = sa.filter([PropertyMock(id='a', cleared='cleared', flag_color='red', account=MagicMock(id='account_idx'),
+								transaction_date=date(2024, 1, 1), subtransactions=[]),
+				   PropertyMock(id='b', cleared='reconciled', flag_color='red', account=MagicMock(id='account_idx'),
+								transaction_date=date(2024, 1, 1), subtransactions=[]),
+				   PropertyMock(id='c', cleared='uncleared', flag_color='red', account=MagicMock(id='account_idx'),
+								transaction_date=date(2024, 1, 1), subtransactions=[])
+				   ])
+	assert len(f) == 2
+	assert f[0].id == 'a'
+	assert f[1].id == 'b'
+
+def test_split_flag():
+	sa = SplitAdjuster(credentials=MagicMock(), flag_color='red', transfer_payee_id='transfer_payee_id',
+					   account_id='account_id', since=date(2024, 1, 1))
+	f = sa.filter([PropertyMock(id='a', cleared='cleared', flag_color='red', account=MagicMock(id='account_idx'),
+								transaction_date=date(2024, 1, 1), subtransactions=[]),
+				   PropertyMock(id='b', cleared='cleared', flag_color=None, account=MagicMock(id='account_idx'),
+								transaction_date=date(2024, 1, 1), subtransactions=[])
+				   ])
+	assert len(f) == 1
+	assert f[0].id == 'a'
+
+def test_split_date():
+	sa = SplitAdjuster(credentials=MagicMock(), flag_color='red', transfer_payee_id='transfer_payee_id',
+					   account_id='account_id', since=date(2024, 1, 1))
+	f = sa.filter([PropertyMock(id='a', cleared='cleared', flag_color='red', account=MagicMock(id='account_idx'),
+								transaction_date=date(2024, 1, 1), subtransactions=[]),
+				   PropertyMock(id='b', cleared='cleared', flag_color='red', account=MagicMock(id='account_idx'),
+								transaction_date=date(2023, 1, 1), subtransactions=[])
+				   ])
+	assert len(f) == 1
+	assert f[0].id == 'a'
 
 @patch('ynabsplitbudget.adjusters.SplitAdjuster.payees', new_callable=PropertyMock())
 def test_split_adjust(mock_payees):
 	# Arrange
 	sa = SplitAdjuster(credentials=MagicMock(), flag_color='red', transfer_payee_id='transfer_payee_id',
-					   account_id='account_id')
+					   account_id='account_id', since=MagicMock(type=date))
 	mock_payees.fetch_by_id.return_value = Payee(name='transfer_payee')
 	# Act
 	mt = sa.adjust(PropertyMock(category=Category(id='category_id', name='category_name'),

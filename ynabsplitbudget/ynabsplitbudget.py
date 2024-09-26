@@ -41,16 +41,17 @@ class YnabSplitBudget:
 										 f'{self.partner.name}')
 		return complement_transactions
 
-	def split(self) -> List[Transaction]:
+	def split(self, since: date) -> List[Transaction]:
 		"""Splits transactions (by default 50%) into subtransaction with original category and transfer subtransaction
 		to split account
 
+		:param since: date from which on to do splitting
 		:return: list with split transactions
 		"""
 		creds = Credentials(token=self.user.token, budget=self.user.budget_id)
 		s = SplitAdjuster(creds, flag_color=self.user.flag_color,
 						  transfer_payee_id=self.user.fetch_account().transfer_payee_id,
-						  account_id=self.user.account_id)
+						  account_id=self.user.account_id, since=since)
 		mod_trans = s.apply()
 		updated_transactions = s.update(mod_trans)
 		logging.getLogger(__name__).info(f'split {len(updated_transactions)} transactions for {self.user.name}')
