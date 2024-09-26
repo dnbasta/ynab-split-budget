@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from ynabtransactionadjuster import ModifiedTransaction
 
-from models.transaction import RootTransaction
+from ynabsplitbudget.models.transaction import RootTransaction
 from ynabsplitbudget import YnabSplitBudget
 from ynabsplitbudget.models.exception import BalancesDontMatch
 
