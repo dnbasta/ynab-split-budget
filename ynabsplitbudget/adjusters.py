@@ -1,3 +1,4 @@
+from datetime import date
 from typing import List
 
 from ynabtransactionadjuster import Adjuster, Credentials, ModifierSubTransaction
@@ -38,15 +39,20 @@ class ClearAdjuster(Adjuster):
 
 class SplitAdjuster(Adjuster):
 
-	def __init__(self, credentials: Credentials, flag_color: str, transfer_payee_id: str, account_id: str):
+	def __init__(self, credentials: Credentials, flag_color: str, transfer_payee_id: str, account_id: str, since: date):
 		super().__init__(credentials=credentials)
 		self.flag_color = flag_color
 		self.transfer_payee_id = transfer_payee_id
 		self.account_id = account_id
+		self.since = since
 
 	def filter(self, transactions: List[Transaction]) -> List[Transaction]:
-		return [t for t in transactions if t.cleared == 'cleared' and t.approved and t.flag_color == self.flag_color
-				and not t.subtransactions and not t.account.id == self.account_id]
+		return [t for t in transactions if t.cleared in ('cleared', 'reconciled')
+				and t.approved
+				and t.flag_color == self.flag_color
+				and not t.subtransactions
+				and not t.account.id == self.account_id
+				and t.transaction_date >= self.since]
 
 	def adjust(self, original: Transaction, modifier: Modifier) -> Modifier:
 		split_amount = SplitParser().parse_split(transaction=original)
