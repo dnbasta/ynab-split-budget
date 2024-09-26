@@ -4,7 +4,7 @@ from typing import List
 
 from ynabtransactionadjuster import Credentials, Transaction, ModifiedTransaction
 
-from models.transaction import RootTransaction
+from ynabsplitbudget.models.transaction import RootTransaction
 from ynabsplitbudget.adjusters import SplitAdjuster
 from ynabsplitbudget.client import Client
 from ynabsplitbudget.models.exception import BalancesDontMatch
