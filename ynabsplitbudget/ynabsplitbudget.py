@@ -2,8 +2,9 @@ import logging
 from datetime import date
 from typing import List
 
-from ynabtransactionadjuster import Credentials, Transaction
+from ynabtransactionadjuster import Credentials, Transaction, ModifiedTransaction
 
+from models.transaction import RootTransaction
 from ynabsplitbudget.adjusters import SplitAdjuster
 from ynabsplitbudget.client import Client
 from ynabsplitbudget.models.exception import BalancesDontMatch
@@ -40,6 +41,19 @@ class YnabSplitBudget:
 										 f'{self.partner.name}')
 		return complement_transactions
 
+	def push_preview(self, include_uncleared: bool = False, ) -> List[RootTransaction]:
+		"""Previews transactions to be pushed from user split account to partner split account.
+
+		:param include_uncleared: If set to True, will also consider uncleared transactions
+		:return: List of inserted transactions in partner split account
+		"""
+		repo = SyncRepository(user=self.user, partner=self.partner)
+		transactions = repo.fetch_roots_wo_complement(since=self.since, include_uncleared=include_uncleared)
+
+		logging.getLogger(__name__).info(f'would insert {len(transactions)} complements into account of '
+										 f'{self.partner.name}')
+		return transactions
+
 	def split(self) -> List[Transaction]:
 		"""Splits transactions (by default 50%) into subtransaction with original category and transfer subtransaction
 		to split account
@@ -55,6 +69,20 @@ class YnabSplitBudget:
 		logging.getLogger(__name__).info(f'split {len(updated_transactions)} transactions for {self.user.name}')
 
 		return updated_transactions
+
+	def split_preview(self) -> List[ModifiedTransaction]:
+		"""Previews transactions to be split without updating the transactions in YNAB.
+
+		:return: list with modified transactions
+		"""
+
+		creds = Credentials(token=self.user.token, budget=self.user.budget_id)
+		s = SplitAdjuster(creds, flag_color=self.user.flag_color,
+						  transfer_payee_id=self.user.fetch_account().transfer_payee_id,
+						  account_id=self.user.account_id, since=self.since)
+		mod_trans = s.apply()
+		logging.getLogger(__name__).info(f'would split {len(mod_trans)} transactions for {self.user.name}')
+		return mod_trans
 
 	def raise_on_balances_off(self):
 		"""Evaluates cleared balances in both accounts
