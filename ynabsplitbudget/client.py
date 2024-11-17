@@ -98,7 +98,7 @@ class Client:
 		url = f'{YNAB_BASE_URL}budgets/{self.budget_id}/accounts/{self.account_id}'
 		r = self.session.get(url)
 		r.raise_for_status()
-		balance = r.json()['data']['account']['cleared_balance']
+		balance = r.json()['data']['account']['balance']
 		return balance
 
 	def delete_complement(self, transaction_id: str) -> None:
