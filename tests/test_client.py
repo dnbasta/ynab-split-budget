@@ -107,7 +107,7 @@ def test_fetch_new_empty(mock_client, mock_transaction_dict):
 
 def test_fetch_balance(mock_client):
 	# Arrange
-	mock_client.session.get.return_value = mock_response({'data': {'account': {'cleared_balance': 100}}})
+	mock_client.session.get.return_value = mock_response({'data': {'account': {'balance': 100}}})
 	# Act
 	b = mock_client.fetch_balance()
 
