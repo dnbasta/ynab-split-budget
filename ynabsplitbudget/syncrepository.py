@@ -1,6 +1,7 @@
 from datetime import date
 from typing import List, Union
 
+from session import Session
 from ynabsplitbudget.client import Client
 from ynabsplitbudget.models.transaction import RootTransaction, ComplementTransaction, LookupTransaction
 from ynabsplitbudget.models.user import User
@@ -8,11 +9,11 @@ from ynabsplitbudget.models.user import User
 
 class SyncRepository:
 
-	def __init__(self, user: User, partner: User):
-		self._user_client = Client(token=user.token, budget_id=user.budget_id, account_id=user.account_id,
-								   user_name=user.name)
-		self._partner_client = Client(token=partner.token, budget_id=partner.budget_id, account_id=partner.account_id,
-									  user_name=partner.name)
+	def __init__(self, user: User, partner: User, session: Session):
+		self._user_client = Client(budget_id=user.budget_id, account_id=user.account_id,
+								   user_name=user.name, session=session)
+		self._partner_client = Client(budget_id=partner.budget_id, account_id=partner.account_id,
+									  user_name=partner.name, session=session)
 
 	def fetch_roots_wo_complement(self, since: date, include_uncleared: bool) -> List[RootTransaction]:
 		roots = self._user_client.fetch_roots(since=since, include_uncleared=include_uncleared)

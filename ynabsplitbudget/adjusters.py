@@ -4,6 +4,7 @@ from typing import List
 from ynabtransactionadjuster import Adjuster, Credentials, ModifierSubTransaction
 from ynabtransactionadjuster.models import Transaction, Modifier
 
+from session import Session
 from ynabsplitbudget.splitparser import SplitParser
 
 
@@ -21,8 +22,8 @@ class ReconcileAdjuster(Adjuster):
 
 class ClearAdjuster(Adjuster):
 
-	def __init__(self, credentials: Credentials, split_transaction_ids: List[str]):
-		super().__init__(credentials=credentials)
+	def __init__(self, credentials: Credentials, split_transaction_ids: List[str], session: Session):
+		super().__init__(credentials=credentials, session=session)
 		self.split_transaction_ids = split_transaction_ids
 
 	def filter(self, transactions: List[Transaction]) -> List[Transaction]:
@@ -39,8 +40,9 @@ class ClearAdjuster(Adjuster):
 
 class SplitAdjuster(Adjuster):
 
-	def __init__(self, credentials: Credentials, flag_color: str, transfer_payee_id: str, account_id: str, since: date):
-		super().__init__(credentials=credentials)
+	def __init__(self, credentials: Credentials, flag_color: str, transfer_payee_id: str, account_id: str, since: date,
+				 session: Session):
+		super().__init__(credentials=credentials, session=session)
 		self.flag_color = flag_color
 		self.transfer_payee_id = transfer_payee_id
 		self.account_id = account_id

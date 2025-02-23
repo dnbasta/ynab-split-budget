@@ -12,8 +12,7 @@ from ynabsplitbudget.models.transaction import RootTransaction, LookupTransactio
 
 @pytest.fixture
 def mock_client():
-	client = Client(token='', user_name='', budget_id='', account_id='account_id')
-	client.session = MagicMock()
+	client = Client(session=MagicMock(), user_name='', budget_id='', account_id='account_id')
 	return client
 
 

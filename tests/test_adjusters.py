@@ -44,7 +44,7 @@ def test_reconcile_adjust_wo_category(mock_categories):
 
 def test_split_subtransactions():
 	sa = SplitAdjuster(credentials=MagicMock(), flag_color='red', transfer_payee_id='transfer_payee_id',
-					   account_id='account_id', since=date(2024, 1, 1))
+					   account_id='account_id', since=date(2024, 1, 1), session=MagicMock())
 	f = sa.filter([PropertyMock(id='a', cleared='cleared', flag_color='red', account=MagicMock(id='account_idx'),
 								transaction_date=date(2024, 1, 1), subtransactions=[]),
 				   PropertyMock(id='b', cleared='cleared', flag_color='red', account=MagicMock(id='account_idx'),
@@ -54,7 +54,7 @@ def test_split_subtransactions():
 
 def test_split_cleared():
 	sa = SplitAdjuster(credentials=MagicMock(), flag_color='red', transfer_payee_id='transfer_payee_id',
-					   account_id='account_id', since=date(2024, 1, 1))
+					   account_id='account_id', since=date(2024, 1, 1), session=MagicMock())
 	f = sa.filter([PropertyMock(id='a', cleared='cleared', flag_color='red', account=MagicMock(id='account_idx'),
 								transaction_date=date(2024, 1, 1), subtransactions=[]),
 				   PropertyMock(id='b', cleared='reconciled', flag_color='red', account=MagicMock(id='account_idx'),
@@ -68,7 +68,7 @@ def test_split_cleared():
 
 def test_split_flag():
 	sa = SplitAdjuster(credentials=MagicMock(), flag_color='red', transfer_payee_id='transfer_payee_id',
-					   account_id='account_id', since=date(2024, 1, 1))
+					   account_id='account_id', since=date(2024, 1, 1), session=MagicMock())
 	f = sa.filter([PropertyMock(id='a', cleared='cleared', flag_color='red', account=MagicMock(id='account_idx'),
 								transaction_date=date(2024, 1, 1), subtransactions=[]),
 				   PropertyMock(id='b', cleared='cleared', flag_color=None, account=MagicMock(id='account_idx'),
@@ -79,7 +79,7 @@ def test_split_flag():
 
 def test_split_date():
 	sa = SplitAdjuster(credentials=MagicMock(), flag_color='red', transfer_payee_id='transfer_payee_id',
-					   account_id='account_id', since=date(2024, 1, 1))
+					   account_id='account_id', since=date(2024, 1, 1), session=MagicMock())
 	f = sa.filter([PropertyMock(id='a', cleared='cleared', flag_color='red', account=MagicMock(id='account_idx'),
 								transaction_date=date(2024, 1, 1), subtransactions=[]),
 				   PropertyMock(id='b', cleared='cleared', flag_color='red', account=MagicMock(id='account_idx'),
@@ -92,7 +92,7 @@ def test_split_date():
 def test_split_adjust(mock_payees):
 	# Arrange
 	sa = SplitAdjuster(credentials=MagicMock(), flag_color='red', transfer_payee_id='transfer_payee_id',
-					   account_id='account_id', since=MagicMock(type=date))
+					   account_id='account_id', since=MagicMock(type=date), session=MagicMock())
 	mock_payees.fetch_by_id.return_value = Payee(name='transfer_payee')
 	# Act
 	mt = sa.adjust(PropertyMock(category=Category(id='category_id', name='category_name'),
@@ -109,7 +109,7 @@ def test_split_adjust(mock_payees):
 
 
 def test_clear_filter():
-	ca = ClearAdjuster(credentials=MagicMock(), split_transaction_ids=['transaction_id'])
+	ca = ClearAdjuster(credentials=MagicMock(), split_transaction_ids=['transaction_id'], session=MagicMock())
 	r = ca.filter([PropertyMock(spec=Transaction, cleared='uncleared', id='transaction_id'),
 				   PropertyMock(spec=Transaction, cleared='uncleared', id='transaction_id2'),
 				   PropertyMock(spec=Transaction, cleared='cleared', id='transaction_id')])
@@ -119,7 +119,7 @@ def test_clear_filter():
 @patch('ynabsplitbudget.adjusters.ClearAdjuster.categories', new_callable=PropertyMock())
 def test_clear_adjust(mock_categories):
 	# Arrange
-	ca = ClearAdjuster(credentials=MagicMock(), split_transaction_ids=[])
+	ca = ClearAdjuster(credentials=MagicMock(), split_transaction_ids=[], session=MagicMock())
 	mock_category = Category(name='category_name', id='category_id')
 	# Act
 	mt = ca.adjust(PropertyMock(cleared='uncleared', category=mock_category),
@@ -133,7 +133,7 @@ def test_clear_adjust(mock_categories):
 @patch('ynabsplitbudget.adjusters.ClearAdjuster.categories', new_callable=PropertyMock())
 def test_clear_adjust_wo_category(mock_categories):
 	# Arrange
-	ca = ClearAdjuster(credentials=MagicMock(), split_transaction_ids=[])
+	ca = ClearAdjuster(credentials=MagicMock(), split_transaction_ids=[], session=MagicMock())
 	mock_category = Category(name='category_name', id='category_id')
 	mock_categories.fetch_by_name.return_value = mock_category
 	# Act

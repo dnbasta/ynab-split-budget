@@ -2,8 +2,7 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from typing import List, Union
 
-import requests
-from requests import HTTPError
+from requests import HTTPError, Session
 
 from ynabsplitbudget.models.account import Account
 from ynabsplitbudget.models.exception import BudgetNotFound, AccountNotFound
@@ -16,9 +15,8 @@ YNAB_BASE_URL = 'https://api.ynab.com/v1/'
 @dataclass
 class Client:
 
-	def __init__(self, user_name: str, budget_id: str, account_id: str, token: str):
-		self.session = requests.Session()
-		self.session.headers.update({'Authorization': f'Bearer {token}'})
+	def __init__(self, user_name: str, budget_id: str, account_id: str, session: Session):
+		self.session = session
 		self.user_name = user_name
 		self.budget_id = budget_id
 		self.account_id = account_id

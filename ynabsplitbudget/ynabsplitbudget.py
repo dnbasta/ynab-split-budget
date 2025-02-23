@@ -4,6 +4,7 @@ from typing import List
 
 from ynabtransactionadjuster import Credentials, Transaction, ModifiedTransaction
 
+from session import Session
 from models.transaction import RootTransaction
 from ynabsplitbudget.adjusters import SplitAdjuster
 from ynabsplitbudget.client import Client
@@ -26,6 +27,7 @@ class YnabSplitBudget:
 		self.partner = partner
 		self.since = since
 		self.logger = self._set_up_logger()
+		self._session = Session(self.user.token)
 
 	def push(self, include_uncleared: bool = False, ) -> List[ComplementTransaction]:
 		"""Pushes transactions from user split account to partner split account.
@@ -33,11 +35,12 @@ class YnabSplitBudget:
 		:param include_uncleared: If set to True, will also consider uncleared transactions
 		:return: List of inserted transactions in partner split account
 		"""
-		repo = SyncRepository(user=self.user, partner=self.partner)
+		repo = SyncRepository(user=self.user, partner=self.partner,session=self._session)
 		transactions = repo.fetch_roots_wo_complement(since=self.since, include_uncleared=include_uncleared)
 
 		complement_transactions = repo.insert_complements(transactions)
-		logging.getLogger(__name__).info(f'inserted {len(complement_transactions)} complements into account of '
+		self._log_request_count()
+		self.logger.info(f'inserted {len(complement_transactions)} complements into account of '
 										 f'{self.partner.name}')
 		return complement_transactions
 
@@ -47,10 +50,10 @@ class YnabSplitBudget:
 		:param include_uncleared: If set to True, will also consider uncleared transactions
 		:return: List of inserted transactions in partner split account
 		"""
-		repo = SyncRepository(user=self.user, partner=self.partner)
+		repo = SyncRepository(user=self.user, partner=self.partner, session=self._session)
 		transactions = repo.fetch_roots_wo_complement(since=self.since, include_uncleared=include_uncleared)
-
-		logging.getLogger(__name__).info(f'would insert {len(transactions)} complements into account of '
+		self._log_request_count()
+		self.logger.info(f'would insert {len(transactions)} complements into account of '
 										 f'{self.partner.name}')
 		return transactions
 
@@ -63,10 +66,11 @@ class YnabSplitBudget:
 		creds = Credentials(token=self.user.token, budget=self.user.budget_id)
 		s = SplitAdjuster(creds, flag_color=self.user.flag_color,
 						  transfer_payee_id=self.user.fetch_account().transfer_payee_id,
-						  account_id=self.user.account_id, since=self.since)
+						  account_id=self.user.account_id, since=self.since, session=self._session)
 		mod_trans = s.apply()
 		updated_transactions = s.update(mod_trans)
-		logging.getLogger(__name__).info(f'split {len(updated_transactions)} transactions for {self.user.name}')
+		self._log_request_count()
+		self.logger.info(f'split {len(updated_transactions)} transactions for {self.user.name}')
 
 		return updated_transactions
 
@@ -79,9 +83,9 @@ class YnabSplitBudget:
 		creds = Credentials(token=self.user.token, budget=self.user.budget_id)
 		s = SplitAdjuster(creds, flag_color=self.user.flag_color,
 						  transfer_payee_id=self.user.fetch_account().transfer_payee_id,
-						  account_id=self.user.account_id, since=self.since)
+						  account_id=self.user.account_id, since=self.since, session=self._session)
 		mod_trans = s.apply()
-		logging.getLogger(__name__).info(f'would split {len(mod_trans)} transactions for {self.user.name}')
+		self.logger.info(f'would split {len(mod_trans)} transactions for {self.user.name}')
 		return mod_trans
 
 	def raise_on_balances_off(self):
@@ -89,7 +93,7 @@ class YnabSplitBudget:
 
 		:raises BalancesDontMatch: if cleared amounts in both accounts don't match
 		"""
-		repo = SyncRepository(user=self.user, partner=self.partner)
+		repo = SyncRepository(user=self.user, partner=self.partner, session=self._session)
 		user_balance, partner_balance = repo.fetch_balances()
 		if user_balance + partner_balance != 0:
 			raise BalancesDontMatch({'user': {'name': self.user.name,
@@ -103,9 +107,9 @@ class YnabSplitBudget:
 		"""
 		orphaned_complements = SyncRepository(user=self.user, partner=self.partner).find_orphaned_partner_complements(self.since)
 		c = Client(user_name=self.partner.name, budget_id=self.partner.budget_id, account_id=self.partner.account_id,
-				   token=self.partner.token)
+				   session=self._session)
 		[c.delete_complement(oc.id) for oc in orphaned_complements]
-		logging.getLogger(__name__).info(f'deleted {len(orphaned_complements)} orphaned complements in account of {self.partner.name}')
+		self.logger.info(f'deleted {len(orphaned_complements)} orphaned complements in account of {self.partner.name}')
 		if orphaned_complements:
 			logging.getLogger(__name__).info(orphaned_complements)
 		return orphaned_complements
@@ -114,5 +118,7 @@ class YnabSplitBudget:
 	def _set_up_logger() -> logging.Logger:
 		parent_name = '.'.join(__name__.split('.')[:-1])
 		logger = logging.getLogger(parent_name)
-		logger.setLevel(20)
 		return logger
+
+	def _log_request_count(self):
+		self.logger.debug(f'made {self._session.request_count} calls to YNAB API')
