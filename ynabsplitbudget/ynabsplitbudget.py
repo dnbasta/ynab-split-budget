@@ -121,4 +121,4 @@ class YnabSplitBudget:
 		return logger
 
 	def _log_request_count(self):
-		self.logger.debug(f'made {self._session.request_count} calls to YNAB API')
+		self.logger.debug(f'made {self._session.request_count} API calls to YNAB')
