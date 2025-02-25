@@ -55,10 +55,12 @@ class TransactionBuilder:
 		else:
 			tt_ids = [st['transfer_transaction_id'] for st in t_dict['subtransactions']
 					  if st['transfer_transaction_id'] is not None]
-			payee_name = t_dict['payee_name']
+			if t_dict['payee_name'] and 'Transfer' in t_dict['payee_name']:
+				payee_name = t_dict['import_payee_name']
+			else:
+				payee_name = t_dict['payee_name']
 
 		return LookupTransaction(payee_name=payee_name,
 				   transfer_transaction_ids=tt_ids,
 				   account_id=t_dict['account_id'])
-
 

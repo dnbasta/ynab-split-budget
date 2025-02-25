@@ -74,6 +74,8 @@ class Client:
 			except HTTPError as e:
 				if e.response.status_code == 409:
 					iteration += 1
+				else:
+					raise e
 
 	def _insert(self, t: RootTransaction, iteration: int) -> ComplementTransaction:
 		url = f'{YNAB_BASE_URL}budgets/{self.budget_id}/transactions'
@@ -91,6 +93,28 @@ class Client:
 		r.raise_for_status()
 		complement = self.transaction_builder.build_complement(r.json()['data']['transaction'])
 		return complement
+
+	def insert_bulk(self, transactions: List[RootTransaction]) -> List[ComplementTransaction]:
+		url = f'{YNAB_BASE_URL}budgets/{self.budget_id}/transactions'
+		data = {"transactions": self._prepare_bulk(transactions)}
+		r = self.session.post(url, json=data)
+		try:
+			r.raise_for_status()
+			transaction_dicts = r.json()['data']['transactions']
+			return [self.transaction_builder.build_complement(t) for t in transaction_dicts]
+		except HTTPError as e:
+			raise HTTPError(f"{e.response.status_code} - {e.response.text}: {data}")
+
+	def _prepare_bulk(self, transactions: List[RootTransaction]) -> List[dict]:
+		t_dict_list = [{"account_id": self.account_id,
+							"date": t.transaction_date.strftime("%Y-%m-%d"),
+							"amount": - t.amount,
+							"payee_name": t.payee_name,
+							"memo": t.memo,
+							"cleared": 'cleared',
+							"approved": False,
+							"import_id": f's||{t.share_id}||0'} for t in transactions]
+		return t_dict_list
 
 	def fetch_balance(self) -> int:
 		url = f'{YNAB_BASE_URL}budgets/{self.budget_id}/accounts/{self.account_id}'

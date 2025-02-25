@@ -24,7 +24,9 @@ class SyncRepository:
 		return transactions_replaced_payee
 
 	def insert_complements(self, transactions: List[RootTransaction]) -> List[ComplementTransaction]:
-		return [self._partner_client.insert_complement(t) for t in transactions]
+		complements = self._partner_client.insert_bulk(transactions)
+		return complements
+
 
 	def replace_payee(self, transactions: List[RootTransaction], lookup_date: date) -> List[RootTransaction]:
 		ul = self._user_client.fetch_lookup(lookup_date)

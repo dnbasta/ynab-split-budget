@@ -59,7 +59,13 @@ class SplitAdjuster(Adjuster):
 	def adjust(self, original: Transaction, modifier: Modifier) -> Modifier:
 		split_amount = SplitParser().parse_split(transaction=original)
 		s1 = ModifierSubTransaction(amount=split_amount, payee=self.payees.fetch_by_id(self.transfer_payee_id),
-									memo=f"{original.payee.name} | {original.memo}")
+									memo=f"{self._fetch_name(original)} | {original.memo}")
 		s2 = ModifierSubTransaction(amount=original.amount - split_amount, category=original.category, memo=original.memo)
 		modifier.subtransactions = [s1, s2]
 		return modifier
+
+	@staticmethod
+	def _fetch_name(t: Transaction) -> str:
+		if 'Transfer' in t.payee.name:
+			return t.import_payee_name
+		return t.payee.name
