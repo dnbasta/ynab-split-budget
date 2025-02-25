@@ -52,7 +52,8 @@ class SplitAdjuster(Adjuster):
 				and t.flag_color == self.flag_color
 				and not t.subtransactions
 				and not t.account.id == self.account_id
-				and t.transaction_date >= self.since]
+				and t.transaction_date >= self.since
+				and t.transfer_transaction_id is None]
 
 	def adjust(self, original: Transaction, modifier: Modifier) -> Modifier:
 		split_amount = SplitParser().parse_split(transaction=original)
