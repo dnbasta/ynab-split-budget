@@ -76,6 +76,8 @@ class Client:
 			except HTTPError as e:
 				if e.response.status_code == 409:
 					iteration += 1
+				else:
+					raise e
 
 	def _insert(self, t: RootTransaction, iteration: int) -> ComplementTransaction:
 		url = f'{YNAB_BASE_URL}budgets/{self.budget_id}/transactions'
