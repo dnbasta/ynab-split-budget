@@ -84,6 +84,19 @@ def test_split_flag():
 	assert len(f) == 1
 	assert f[0].id == 'a'
 
+def test_split_transaction_id():
+	sa = SplitAdjuster(credentials=MagicMock(), flag_color='red', transfer_payee_id='transfer_payee_id',
+					   account_id='account_id', since=date(2024, 1, 1))
+	f = sa.filter([PropertyMock(id='a', cleared='cleared', flag_color='red', account=MagicMock(id='account_idx'),
+								transaction_date=date(2024, 1, 1), subtransactions=[],
+								transfer_transaction_id=None),
+				   PropertyMock(id='b', cleared='cleared', flag_color='red', account=MagicMock(id='account_idx'),
+								transaction_date=date(2024, 1, 1), subtransactions=[],
+								transfer_transaction_id='transfer_transaction_id')
+				   ])
+	assert len(f) == 1
+	assert f[0].id == 'a'
+
 def test_split_date():
 	sa = SplitAdjuster(credentials=MagicMock(), flag_color='red', transfer_payee_id='transfer_payee_id',
 					   account_id='account_id', since=date(2024, 1, 1))
