@@ -6,7 +6,7 @@ from unicodedata import category
 import requests
 from requests import HTTPError
 
-from models.transaction import InsertTransaction
+from ynabsplitbudget.models.transaction import InsertTransaction
 from ynabsplitbudget.models.account import Account
 from ynabsplitbudget.models.exception import BudgetNotFound, AccountNotFound
 from ynabsplitbudget.transactionbuilder import TransactionBuilder
