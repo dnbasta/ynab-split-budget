@@ -24,7 +24,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install poetry pytest
+        pip install poetry pytest==8.3.4
         poetry install
         poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
     - name: Test
