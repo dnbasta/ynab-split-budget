@@ -175,6 +175,6 @@ def test_insert_complement_iteration(mock_client, mock_transaction_dict):
 
     # Assert
     assert mock_client.session.post.call_count == 2
-    assert mock_client.session.post.called_with(ANY, json=dict(data=(dict(transactions=[mock_transaction_dict]))))
+    mock_client.session.post.called_with(ANY, json=dict(data=(dict(transactions=[mock_transaction_dict]))))
     post_dict = mock_client.session.post.call_args_list[1][1]['json']['transactions'][0]
     assert post_dict['import_id'] == f's||{mock_root.share_id}||2'
